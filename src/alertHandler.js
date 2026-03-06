@@ -1,4 +1,5 @@
 import { execFile } from 'child_process';
+import { existsSync } from 'fs';
 import { getConfig } from './configManager.js';
 import notifier from 'node-notifier';
 import open from 'open';
@@ -96,6 +97,31 @@ function showNotification(alert, matchedAreas) {
     timeout: 30,
     appID: 'RedAlert.PikudHaoref.Monitor',
     icon: join(__dirname, '..', 'assets', 'icon-alert.ico')
+  }, (err, response, metadata) => {
+    if (err) {
+      console.error('Notification error:', err.message);
+    }
+    if (metadata?.activationType === 'error' || response === 'error') {
+      console.error('Notification failed. Falling back to PowerShell toast.');
+      showPowerShellToast(alert, matchedAreas);
+    }
+  });
+}
+
+function showPowerShellToast(alert, matchedAreas) {
+  const title = (alert.title || 'Alert').replace(/'/g, "''");
+  const areas = matchedAreas.join(', ').replace(/'/g, "''");
+  execFile('powershell.exe', [
+    '-NoProfile', '-Command',
+    `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null;
+     [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType = WindowsRuntime] | Out-Null;
+     $xml = New-Object Windows.Data.Xml.Dom.XmlDocument;
+     $xml.LoadXml('<toast><visual><binding template="ToastGeneric"><text>Red Alert!</text><text>${title} - ${areas}</text></binding></visual></toast>');
+     $toast = [Windows.UI.Notifications.ToastNotification]::new($xml);
+     [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('RedAlert.PikudHaoref.Monitor').Show($toast);`
+  ], (err) => {
+    if (err) console.error('PowerShell toast error:', err.message);
+    else console.log('PowerShell toast shown successfully');
   });
 }
 
@@ -110,10 +136,34 @@ function playAlertSound() {
 }
 
 function openBrowser(url) {
-  open(url, { app: { name: 'chrome' } }).catch(() => {
-    open(url).catch(err => {
-      console.error('Failed to open browser:', err.message);
+  // On Windows, 'open' needs the start command or the full exe path for Chrome
+  const chromePaths = [
+    join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    join(process.env['PROGRAMFILES'] || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
+    join(process.env['PROGRAMFILES(X86)'] || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
+  ];
+
+  const chromePath = chromePaths.find(p => {
+    try { return existsSync(p); } catch { return false; }
+  });
+
+  if (chromePath) {
+    console.log('Opening Chrome:', url);
+    execFile(chromePath, ['--new-window', url], (err) => {
+      if (err) {
+        console.error('Chrome launch error:', err.message);
+        openDefault(url);
+      }
     });
+  } else {
+    console.log('Chrome not found, using default browser');
+    openDefault(url);
+  }
+}
+
+function openDefault(url) {
+  open(url).catch(err => {
+    console.error('Failed to open browser:', err.message);
   });
 }
 

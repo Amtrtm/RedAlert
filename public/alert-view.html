@@ -92,14 +92,43 @@
       font-weight: 600;
     }
 
-    /* N12 iframe */
-    #news-iframe {
+    /* Live video player */
+    #live-video {
       width: 100%;
       height: 100%;
-      border: none;
       position: absolute;
       top: 0;
       left: 0;
+      background: #000;
+      object-fit: contain;
+    }
+
+    /* Unmute prompt overlay */
+    #unmute-prompt {
+      position: fixed;
+      bottom: 60px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 30;
+      padding: 12px 28px;
+      background: rgba(0,0,0,0.85);
+      color: #fff;
+      border: 2px solid #e74c3c;
+      border-radius: 10px;
+      font-size: 1.2rem;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      pointer-events: auto;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      animation: pulse-unmute 2s ease-in-out infinite;
+    }
+
+    #unmute-prompt:hover { background: rgba(30,30,30,0.95); }
+
+    @keyframes pulse-unmute {
+      0%, 100% { transform: translateX(-50%) scale(1); }
+      50% { transform: translateX(-50%) scale(1.05); }
     }
 
     /* Persistent status bar at the bottom */
@@ -159,10 +188,12 @@
     <div class="city" id="city-name"></div>
     <div class="message" id="alert-message"></div>
   </div>
-  <iframe id="news-iframe" src="" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+  <video id="live-video" autoplay muted playsinline></video>
+  <button id="unmute-prompt">&#x1f50a; לחץ להפעלת שמע</button>
   <div id="status-bar">&#x2714; הכל תקין - אין התרעות</div>
   <button id="dismiss-btn">&#x2714; הבנתי - סגור</button>
 
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
   <script>
     const frame = document.getElementById('alert-frame');
     const banner = document.getElementById('alert-banner');
@@ -170,9 +201,75 @@
     const alertMessage = document.getElementById('alert-message');
     const statusBar = document.getElementById('status-bar');
     const dismissBtn = document.getElementById('dismiss-btn');
-    const iframe = document.getElementById('news-iframe');
+    const video = document.getElementById('live-video');
+    const unmuteBtn = document.getElementById('unmute-prompt');
 
     let lastState = 'idle'; // 'idle' | 'danger' | 'safe'
+
+    // HLS stream URLs (N12/Keshet 12 live)
+    const HLS_STREAMS = [
+      'https://mako-streaming.akamaized.net/direct/hls/live/2033791/k12dvr/index_2200.m3u8',
+      'https://mako-streaming.akamaized.net/direct/hls/live/2033791/k12/index_2200.m3u8'
+    ];
+
+    // Initialize HLS live stream
+    function initLiveStream() {
+      if (Hls.isSupported()) {
+        const hls = new Hls({
+          enableWorker: true,
+          lowLatencyMode: true,
+          liveSyncDurationCount: 3,
+          liveMaxLatencyDurationCount: 6
+        });
+
+        let streamIndex = 0;
+
+        hls.on(Hls.Events.ERROR, function(event, data) {
+          if (data.fatal) {
+            console.error('HLS fatal error:', data.type);
+            if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+              // Try next stream URL
+              streamIndex = (streamIndex + 1) % HLS_STREAMS.length;
+              console.log('Switching to stream:', HLS_STREAMS[streamIndex]);
+              hls.loadSource(HLS_STREAMS[streamIndex]);
+            } else if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+              hls.recoverMediaError();
+            } else {
+              // Try reloading after a delay
+              setTimeout(() => {
+                hls.loadSource(HLS_STREAMS[streamIndex]);
+              }, 5000);
+            }
+          }
+        });
+
+        hls.loadSource(HLS_STREAMS[streamIndex]);
+        hls.attachMedia(video);
+
+        hls.on(Hls.Events.MANIFEST_PARSED, function() {
+          video.play().catch(() => {
+            // Autoplay blocked — user needs to interact
+          });
+        });
+      } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+        // Safari native HLS
+        video.src = HLS_STREAMS[0];
+        video.play().catch(() => {});
+      }
+    }
+
+    // Unmute button — browser requires user gesture to unmute
+    unmuteBtn.addEventListener('click', () => {
+      video.muted = false;
+      unmuteBtn.style.display = 'none';
+    });
+
+    // Also unmute on any click on the page
+    document.addEventListener('click', function onFirstClick() {
+      video.muted = false;
+      unmuteBtn.style.display = 'none';
+      document.removeEventListener('click', onFirstClick);
+    });
 
     // Dismiss the green "event over" banner
     dismissBtn.addEventListener('click', () => {
@@ -181,17 +278,6 @@
       dismissBtn.style.display = 'none';
       lastState = 'idle';
     });
-
-    // Load the news feed URL from config
-    async function loadNewsUrl() {
-      try {
-        const res = await fetch('/api/config');
-        const config = await res.json();
-        iframe.src = config.browserUrl || 'https://www.n12.co.il/';
-      } catch (e) {
-        iframe.src = 'https://www.n12.co.il/';
-      }
-    }
 
     async function pollAlertStatus() {
       try {
@@ -232,7 +318,7 @@
     }
 
     // Initialize
-    loadNewsUrl();
+    initLiveStream();
     pollAlertStatus();
     // Poll every 1 second for responsive visual updates
     setInterval(pollAlertStatus, 1000);

@@ -67,8 +67,8 @@ async function loadHistory() {
   }
 
   if (history.length === 0) {
-    const p = document.createElement('p');
-    p.className = 'empty';
+    const p = document.createElement('div');
+    p.className = 'nd-empty';
     p.textContent = 'No alerts yet.';
     container.appendChild(p);
     return;
@@ -76,19 +76,20 @@ async function loadHistory() {
 
   history.forEach(h => {
     const item = document.createElement('div');
-    item.className = 'history-item';
+    item.className = 'nd-history-item';
 
     const time = document.createElement('div');
-    time.className = 'time';
+    time.className = 'nd-history-item__time';
     time.textContent = new Date(h.timestamp).toLocaleString('he-IL');
     item.appendChild(time);
 
     const areas = document.createElement('div');
-    areas.className = 'areas';
+    areas.className = 'nd-history-item__areas';
     areas.textContent = h.areas.join(', ');
     item.appendChild(areas);
 
     const desc = document.createElement('div');
+    desc.className = 'nd-history-item__desc';
     desc.textContent = [h.title, h.description].filter(Boolean).join(' - ');
     item.appendChild(desc);
 
@@ -97,13 +98,13 @@ async function loadHistory() {
 }
 
 function showToast(message) {
-  let toast = document.querySelector('.toast');
+  let toast = document.querySelector('.nd-toast');
   if (!toast) {
     toast = document.createElement('div');
-    toast.className = 'toast';
+    toast.className = 'nd-toast';
     document.body.appendChild(toast);
   }
   toast.textContent = message;
   toast.classList.add('show');
-  setTimeout(() => toast.classList.remove('show'), 2000);
+  setTimeout(() => toast.classList.remove('show'), 2500);
 }

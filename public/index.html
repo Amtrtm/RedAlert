@@ -4,71 +4,141 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>RedAlert - Settings</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>RedAlert</h1>
-      <p class="subtitle">Pikud HaOref Siren Monitor</p>
-    </header>
 
-    <section class="card">
-      <h2>Monitored Areas</h2>
-      <p class="help">Enter area names in Hebrew as they appear in the Pikud HaOref system. One per line.</p>
-      <textarea id="areas" rows="4" placeholder="e.g. &#1514;&#1500; &#1488;&#1489;&#1497;&#1489; - &#1502;&#1512;&#1499;&#1494; &#1492;&#1506;&#1497;&#1512;&#10;&#1495;&#1493;&#1500;&#1493;&#1503;"></textarea>
-    </section>
+<div class="nd-container">
 
-    <section class="card">
-      <h2>Poll Interval</h2>
-      <div class="radio-group">
-        <label><input type="radio" name="pollInterval" value="3000"> 3s</label>
-        <label><input type="radio" name="pollInterval" value="5000"> 5s</label>
-        <label><input type="radio" name="pollInterval" value="10000"> 10s</label>
-        <label><input type="radio" name="pollInterval" value="15000"> 15s</label>
-        <label><input type="radio" name="pollInterval" value="30000"> 30s</label>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>Alert Actions</h2>
-      <div class="checkbox-group">
-        <label><input type="checkbox" id="openBrowser"> Open Chrome to N12 live feed</label>
-        <label><input type="checkbox" id="notification"> Show desktop notification</label>
-        <label><input type="checkbox" id="sound"> Play alert sound</label>
-      </div>
-    </section>
-
-    <section class="card">
-      <h2>News Feed URL</h2>
-      <input type="url" id="browserUrl" placeholder="https://www.n12.co.il/">
-    </section>
-
-    <section class="card">
-      <h2>Alert Cooldown</h2>
-      <p class="help">Seconds to wait before re-triggering for the same alert.</p>
-      <select id="alertCooldown">
-        <option value="30000">30 seconds</option>
-        <option value="60000">60 seconds</option>
-        <option value="120000">2 minutes</option>
-        <option value="300000">5 minutes</option>
-      </select>
-    </section>
-
-    <div class="actions">
-      <button id="saveBtn" class="btn-primary">Save Settings</button>
-      <button id="testBtn" class="btn-secondary">Test Alert</button>
+  <!-- Header -->
+  <div class="nd-header">
+    <div class="nd-brand">
+      <span class="nd-brand__icon"></span>
+      <span class="nd-title">RedAlert</span>
     </div>
-
-    <section class="card">
-      <h2>Alert History</h2>
-      <div id="history" class="history-list">
-        <p class="empty">No alerts yet.</p>
-      </div>
-      <button id="refreshHistory" class="btn-secondary btn-small">Refresh</button>
-    </section>
+    <div class="nd-subtitle">Pikud HaOref Siren Monitor</div>
+    <div style="margin-top: 12px;">
+      <span class="nd-status">
+        <span class="nd-status__dot"></span>
+        Monitoring Active
+      </span>
+    </div>
   </div>
 
-  <script src="app.js"></script>
+  <!-- Monitored Areas -->
+  <div class="nd-card">
+    <div class="nd-card__title">Monitored Areas</div>
+    <div class="nd-card__help">Enter area names in Hebrew as they appear in the Pikud HaOref system. One per line.</div>
+    <textarea class="nd-textarea" id="areas" rows="4" placeholder="&#1514;&#1500; &#1488;&#1489;&#1497;&#1489; - &#1502;&#1512;&#1499;&#1494; &#1492;&#1506;&#1497;&#1512;&#10;&#1495;&#1493;&#1500;&#1493;&#1503;"></textarea>
+  </div>
+
+  <!-- Poll Interval -->
+  <div class="nd-card">
+    <div class="nd-card__title">Poll Interval</div>
+    <div class="nd-pills">
+      <label class="nd-pill">
+        <input type="radio" name="pollInterval" value="3000">
+        <span class="nd-pill__label">3s</span>
+      </label>
+      <label class="nd-pill">
+        <input type="radio" name="pollInterval" value="5000">
+        <span class="nd-pill__label">5s</span>
+      </label>
+      <label class="nd-pill">
+        <input type="radio" name="pollInterval" value="10000">
+        <span class="nd-pill__label">10s</span>
+      </label>
+      <label class="nd-pill">
+        <input type="radio" name="pollInterval" value="15000">
+        <span class="nd-pill__label">15s</span>
+      </label>
+      <label class="nd-pill">
+        <input type="radio" name="pollInterval" value="30000">
+        <span class="nd-pill__label">30s</span>
+      </label>
+    </div>
+  </div>
+
+  <!-- Alert Actions -->
+  <div class="nd-card">
+    <div class="nd-card__title">Alert Actions</div>
+    <div class="nd-setting">
+      <div class="nd-setting__info">
+        <div class="nd-setting__title">Open Browser</div>
+        <div class="nd-setting__desc">Launch Chrome with N12 live feed on alert</div>
+      </div>
+      <label class="nd-toggle">
+        <input type="checkbox" id="openBrowser">
+        <span class="nd-toggle__slider"></span>
+      </label>
+    </div>
+    <div class="nd-setting">
+      <div class="nd-setting__info">
+        <div class="nd-setting__title">Desktop Notification</div>
+        <div class="nd-setting__desc">Show Windows toast notification</div>
+      </div>
+      <label class="nd-toggle">
+        <input type="checkbox" id="notification">
+        <span class="nd-toggle__slider"></span>
+      </label>
+    </div>
+    <div class="nd-setting">
+      <div class="nd-setting__info">
+        <div class="nd-setting__title">Alert Sound</div>
+        <div class="nd-setting__desc">Play siren sound through speakers</div>
+      </div>
+      <label class="nd-toggle">
+        <input type="checkbox" id="sound">
+        <span class="nd-toggle__slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <!-- News Feed URL -->
+  <div class="nd-card">
+    <div class="nd-card__title">News Feed URL</div>
+    <input type="url" class="nd-input" id="browserUrl" dir="ltr" placeholder="https://www.n12.co.il/">
+  </div>
+
+  <!-- Alert Cooldown -->
+  <div class="nd-card">
+    <div class="nd-card__title">Alert Cooldown</div>
+    <div class="nd-card__help">Time to wait before re-triggering for the same alert.</div>
+    <select class="nd-select" id="alertCooldown">
+      <option value="30000">30 seconds</option>
+      <option value="60000">60 seconds</option>
+      <option value="120000">2 minutes</option>
+      <option value="300000">5 minutes</option>
+    </select>
+  </div>
+
+  <!-- Actions -->
+  <div class="nd-actions">
+    <button id="saveBtn" class="nd-btn nd-btn--primary">Save Settings</button>
+    <button id="testBtn" class="nd-btn">Test Alert</button>
+  </div>
+
+  <!-- Alert History -->
+  <div class="nd-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+      <div class="nd-card__title" style="margin-bottom: 0;">Alert History</div>
+      <button id="refreshHistory" class="nd-btn nd-btn--sm">Refresh</button>
+    </div>
+    <div id="history" class="nd-history">
+      <div class="nd-empty">No alerts yet.</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="nd-footer">
+    RedAlert &middot; Pikud HaOref Monitor
+  </div>
+
+</div>
+
+<script src="app.js"></script>
 </body>
 </html>

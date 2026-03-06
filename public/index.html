@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RedAlert - Settings</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>RedAlert</h1>
+      <p class="subtitle">Pikud HaOref Siren Monitor</p>
+    </header>
+
+    <section class="card">
+      <h2>Monitored Areas</h2>
+      <p class="help">Enter area names in Hebrew as they appear in the Pikud HaOref system. One per line.</p>
+      <textarea id="areas" rows="4" placeholder="e.g. &#1514;&#1500; &#1488;&#1489;&#1497;&#1489; - &#1502;&#1512;&#1499;&#1494; &#1492;&#1506;&#1497;&#1512;&#10;&#1495;&#1493;&#1500;&#1493;&#1503;"></textarea>
+    </section>
+
+    <section class="card">
+      <h2>Poll Interval</h2>
+      <div class="radio-group">
+        <label><input type="radio" name="pollInterval" value="3000"> 3s</label>
+        <label><input type="radio" name="pollInterval" value="5000"> 5s</label>
+        <label><input type="radio" name="pollInterval" value="10000"> 10s</label>
+        <label><input type="radio" name="pollInterval" value="15000"> 15s</label>
+        <label><input type="radio" name="pollInterval" value="30000"> 30s</label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Alert Actions</h2>
+      <div class="checkbox-group">
+        <label><input type="checkbox" id="openBrowser"> Open Chrome to N12 live feed</label>
+        <label><input type="checkbox" id="notification"> Show desktop notification</label>
+        <label><input type="checkbox" id="sound"> Play alert sound</label>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>News Feed URL</h2>
+      <input type="url" id="browserUrl" placeholder="https://www.n12.co.il/">
+    </section>
+
+    <section class="card">
+      <h2>Alert Cooldown</h2>
+      <p class="help">Seconds to wait before re-triggering for the same alert.</p>
+      <select id="alertCooldown">
+        <option value="30000">30 seconds</option>
+        <option value="60000">60 seconds</option>
+        <option value="120000">2 minutes</option>
+        <option value="300000">5 minutes</option>
+      </select>
+    </section>
+
+    <div class="actions">
+      <button id="saveBtn" class="btn-primary">Save Settings</button>
+      <button id="testBtn" class="btn-secondary">Test Alert</button>
+    </div>
+
+    <section class="card">
+      <h2>Alert History</h2>
+      <div id="history" class="history-list">
+        <p class="empty">No alerts yet.</p>
+      </div>
+      <button id="refreshHistory" class="btn-secondary btn-small">Refresh</button>
+    </section>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

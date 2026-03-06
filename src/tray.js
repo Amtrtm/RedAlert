@@ -1,4 +1,5 @@
-import SysTray from 'systray2';
+import SysTrayModule from 'systray2';
+const SysTray = SysTrayModule.default || SysTrayModule;
 import { readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

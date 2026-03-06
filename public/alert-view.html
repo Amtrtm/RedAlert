@@ -102,28 +102,55 @@
       left: 0;
     }
 
-    /* Idle state - small status indicator */
-    #status-dot {
+    /* Persistent status bar at the bottom */
+    #status-bar {
       position: fixed;
-      bottom: 10px;
-      right: 10px;
-      width: 12px;
-      height: 12px;
-      border-radius: 50%;
-      background: #2ecc71;
+      bottom: 0;
+      left: 0;
+      right: 0;
       z-index: 20;
-      opacity: 0.7;
+      text-align: center;
+      padding: 10px 20px;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      background: rgba(46, 204, 113, 0.9);
+      color: #fff;
+      pointer-events: none;
+      transition: background 0.3s;
     }
 
-    #status-dot.alert {
-      background: #e74c3c;
-      opacity: 1;
-      animation: blink 0.5s ease-in-out infinite;
+    #status-bar.danger {
+      background: rgba(231, 76, 60, 0.95);
+      animation: blink-bar 0.5s ease-in-out infinite;
     }
 
-    @keyframes blink {
-      50% { opacity: 0.3; }
+    @keyframes blink-bar {
+      50% { opacity: 0.7; }
     }
+
+    /* Dismiss button on the green safe banner */
+    #dismiss-btn {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 25;
+      padding: 10px 30px;
+      background: #fff;
+      color: #27ae60;
+      border: none;
+      border-radius: 8px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: none;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      pointer-events: auto;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+
+    #dismiss-btn:hover { background: #f0f0f0; }
   </style>
 </head>
 <body>
@@ -133,17 +160,27 @@
     <div class="message" id="alert-message"></div>
   </div>
   <iframe id="news-iframe" src="" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
-  <div id="status-dot"></div>
+  <div id="status-bar">&#x2714; הכל תקין - אין התרעות</div>
+  <button id="dismiss-btn">&#x2714; הבנתי - סגור</button>
 
   <script>
     const frame = document.getElementById('alert-frame');
     const banner = document.getElementById('alert-banner');
     const cityName = document.getElementById('city-name');
     const alertMessage = document.getElementById('alert-message');
-    const statusDot = document.getElementById('status-dot');
+    const statusBar = document.getElementById('status-bar');
+    const dismissBtn = document.getElementById('dismiss-btn');
     const iframe = document.getElementById('news-iframe');
 
-    let lastState = null;
+    let lastState = 'idle'; // 'idle' | 'danger' | 'safe'
+
+    // Dismiss the green "event over" banner
+    dismissBtn.addEventListener('click', () => {
+      frame.className = '';
+      banner.className = '';
+      dismissBtn.style.display = 'none';
+      lastState = 'idle';
+    });
 
     // Load the news feed URL from config
     async function loadNewsUrl() {
@@ -171,28 +208,26 @@
         // DANGER - siren active
         frame.className = 'danger';
         banner.className = 'danger';
-        statusDot.className = 'alert';
+        statusBar.className = 'danger';
+        statusBar.textContent = '\u26a0 \u05d4\u05ea\u05e8\u05e2\u05d4 \u05e4\u05e2\u05d9\u05dc\u05d4 - \u05d4\u05d9\u05db\u05e0\u05e1\u05d5 \u05dc\u05de\u05e8\u05d7\u05d1 \u05d4\u05de\u05d5\u05d2\u05df!';
+        dismissBtn.style.display = 'none';
         cityName.textContent = status.areas.join(' | ');
-        alertMessage.textContent = status.title || 'התרעה פעילה';
-      } else if (status.timestamp && lastState !== 'safe') {
-        // Event just ended - show green
+        alertMessage.textContent = status.title || 'Active Alert';
+        lastState = 'danger';
+
+      } else if (lastState === 'danger') {
         frame.className = 'safe';
         banner.className = 'safe';
-        statusDot.className = '';
-        cityName.textContent = 'האירוע הסתיים';
-        alertMessage.textContent = 'The event is over - ניתן לצאת מהמרחב המוגן';
-
-        // Clear green frame after 30 seconds
-        setTimeout(() => {
-          frame.className = '';
-          banner.className = '';
-        }, 30000);
-
+        statusBar.className = '';
+        statusBar.textContent = '\u2714 \u05d4\u05d0\u05d9\u05e8\u05d5\u05e2 \u05d4\u05e1\u05ea\u05d9\u05d9\u05dd - \u05e0\u05d9\u05ea\u05df \u05dc\u05e6\u05d0\u05ea \u05de\u05d4\u05de\u05e8\u05d7\u05d1 \u05d4\u05de\u05d5\u05d2\u05df';
+        cityName.textContent = '\u05d4\u05d0\u05d9\u05e8\u05d5\u05e2 \u05d4\u05e1\u05ea\u05d9\u05d9\u05dd';
+        alertMessage.textContent = 'The event is over';
+        dismissBtn.style.display = 'block';
         lastState = 'safe';
-      }
 
-      if (status.active) {
-        lastState = 'danger';
+      } else {
+        statusBar.className = '';
+        statusBar.textContent = '\u2714 \u05d4\u05db\u05dc \u05ea\u05e7\u05d9\u05df - \u05d0\u05d9\u05df \u05d4\u05ea\u05e8\u05e2\u05d5\u05ea';
       }
     }
 

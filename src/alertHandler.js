@@ -19,6 +19,8 @@ let currentAlertState = {
   timestamp: null
 };
 
+let browserOpen = false;
+
 export function handleAlert(alert) {
   const config = getConfig();
   const matchedAreas = findMatchingAreas(alert, config.areas);
@@ -68,7 +70,8 @@ export function handleAlert(alert) {
     playAlertSound();
   }
 
-  if (actions.openBrowser) {
+  if (actions.openBrowser && !browserOpen) {
+    browserOpen = true;
     openBrowser(`http://localhost:${config.configPort}/alert-view.html`);
   }
 }
@@ -115,6 +118,7 @@ function openBrowser(url) {
 }
 
 export function clearAlert() {
+  browserOpen = false;
   if (currentAlertState.active) {
     console.log('Alert cleared - event is over');
     currentAlertState = {

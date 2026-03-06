@@ -90,7 +90,9 @@ function showNotification(alert, matchedAreas) {
     message: `${alert.title || 'Alert'}\n${matchedAreas.join(', ')}\n${alert.desc || ''}`,
     sound: false,
     wait: true,
-    timeout: 30
+    timeout: 30,
+    appID: 'RedAlert.PikudHaoref.Monitor',
+    icon: join(__dirname, '..', 'assets', 'icon-alert.ico')
   });
 }
 

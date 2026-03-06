@@ -1,8 +1,23 @@
+import { execFileSync } from 'child_process';
 import { loadConfig, getConfig } from './configManager.js';
 import AlertPoller from './alertPoller.js';
 import { handleAlert, clearAlert } from './alertHandler.js';
 import { startConfigServer } from './configServer.js';
 import { createTray, setAlertMode, killTray } from './tray.js';
+
+// Register App ID for Windows toast notifications
+try {
+  execFileSync('powershell.exe', ['-NoProfile', '-Command', `
+    $appId = 'RedAlert.PikudHaoref.Monitor'
+    $key = 'HKCU:\\SOFTWARE\\Classes\\AppUserModelId\\' + $appId
+    if (-not (Test-Path $key)) {
+      New-Item -Path $key -Force | Out-Null
+      New-ItemProperty -Path $key -Name 'DisplayName' -Value 'RedAlert' -Force | Out-Null
+    }
+  `], { stdio: 'ignore' });
+} catch (e) {
+  // Non-critical — notifications may still work without registration
+}
 
 loadConfig();
 

@@ -1,6 +1,6 @@
 import { loadConfig, getConfig } from './configManager.js';
 import AlertPoller from './alertPoller.js';
-import { handleAlert } from './alertHandler.js';
+import { handleAlert, clearAlert } from './alertHandler.js';
 import { startConfigServer } from './configServer.js';
 import { createTray, setAlertMode, killTray } from './tray.js';
 
@@ -12,6 +12,11 @@ poller.on('alert', (alert) => {
   console.log(`Alert received: ${alert.title} - ${alert.data?.join(', ')}`);
   handleAlert(alert);
   setAlertMode(true);
+});
+
+poller.on('clear', () => {
+  clearAlert();
+  setAlertMode(false);
 });
 
 poller.on('status', (status) => {

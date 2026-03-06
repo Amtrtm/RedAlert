@@ -10,6 +10,15 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const alertCooldowns = new Map();
 const alertHistory = [];
 
+// Current alert state for the alert-view page
+let currentAlertState = {
+  active: false,
+  areas: [],
+  title: '',
+  description: '',
+  timestamp: null
+};
+
 export function handleAlert(alert) {
   const config = getConfig();
   const matchedAreas = findMatchingAreas(alert, config.areas);
@@ -40,6 +49,15 @@ export function handleAlert(alert) {
 
   console.log(`SIREN in your area: ${matchedAreas.join(', ')}`);
 
+  // Update current alert state for the alert-view page
+  currentAlertState = {
+    active: true,
+    areas: matchedAreas,
+    title: alert.title || 'התרעה',
+    description: alert.desc || '',
+    timestamp: new Date().toISOString()
+  };
+
   const actions = config.alertActions;
 
   if (actions.notification) {
@@ -51,7 +69,7 @@ export function handleAlert(alert) {
   }
 
   if (actions.openBrowser) {
-    openBrowser(config.browserUrl);
+    openBrowser(`http://localhost:${config.configPort}/alert-view.html`);
   }
 }
 
@@ -92,6 +110,23 @@ function openBrowser(url) {
       console.error('Failed to open browser:', err.message);
     });
   });
+}
+
+export function clearAlert() {
+  if (currentAlertState.active) {
+    console.log('Alert cleared - event is over');
+    currentAlertState = {
+      active: false,
+      areas: currentAlertState.areas,
+      title: 'האירוע הסתיים',
+      description: 'The event is over',
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+export function getAlertStatus() {
+  return currentAlertState;
 }
 
 export function getAlertHistory() {

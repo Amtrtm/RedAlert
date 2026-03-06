@@ -2,7 +2,7 @@ import express from 'express';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getConfig, updateConfig } from './configManager.js';
-import { getAlertHistory } from './alertHandler.js';
+import { getAlertHistory, getAlertStatus } from './alertHandler.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -24,6 +24,10 @@ export function startConfigServer({ onConfigUpdate }) {
     const updated = updateConfig(req.body);
     if (onConfigChange) onConfigChange(updated);
     res.json(updated);
+  });
+
+  app.get('/api/alert-status', (req, res) => {
+    res.json(getAlertStatus());
   });
 
   app.get('/api/history', (req, res) => {

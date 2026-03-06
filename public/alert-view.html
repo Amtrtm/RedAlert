@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RedAlert - Live Feed</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* The alert frame border */
+    #alert-frame {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border: 0px solid transparent;
+      transition: border-color 0.3s, border-width 0.3s;
+      z-index: 10;
+      pointer-events: none;
+    }
+
+    #alert-frame.danger {
+      border: 12px solid #e74c3c;
+      animation: pulse-red 1s ease-in-out infinite;
+    }
+
+    #alert-frame.safe {
+      border: 12px solid #2ecc71;
+      animation: pulse-green 2s ease-in-out 3;
+    }
+
+    @keyframes pulse-red {
+      0%   { border-color: #e74c3c; box-shadow: inset 0 0 40px rgba(231, 76, 60, 0.4); }
+      50%  { border-color: #ff0000; box-shadow: inset 0 0 80px rgba(255, 0, 0, 0.6); }
+      100% { border-color: #e74c3c; box-shadow: inset 0 0 40px rgba(231, 76, 60, 0.4); }
+    }
+
+    @keyframes pulse-green {
+      0%   { border-color: #2ecc71; box-shadow: inset 0 0 30px rgba(46, 204, 113, 0.3); }
+      50%  { border-color: #27ae60; box-shadow: inset 0 0 60px rgba(39, 174, 96, 0.5); }
+      100% { border-color: #2ecc71; box-shadow: inset 0 0 30px rgba(46, 204, 113, 0.3); }
+    }
+
+    /* Top banner for alert info */
+    #alert-banner {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 20;
+      text-align: center;
+      padding: 0;
+      height: 0;
+      overflow: hidden;
+      transition: height 0.3s, padding 0.3s;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      pointer-events: none;
+    }
+
+    #alert-banner.danger {
+      height: auto;
+      padding: 18px 20px;
+      background: rgba(231, 76, 60, 0.95);
+      color: #fff;
+    }
+
+    #alert-banner.safe {
+      height: auto;
+      padding: 18px 20px;
+      background: rgba(46, 204, 113, 0.95);
+      color: #fff;
+    }
+
+    #alert-banner .city {
+      font-size: 2.5rem;
+      font-weight: 800;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+      letter-spacing: 2px;
+    }
+
+    #alert-banner .message {
+      font-size: 1.3rem;
+      margin-top: 4px;
+      font-weight: 600;
+    }
+
+    /* N12 iframe */
+    #news-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      position: absolute;
+      top: 0;
+      left: 0;
+    }
+
+    /* Idle state - small status indicator */
+    #status-dot {
+      position: fixed;
+      bottom: 10px;
+      right: 10px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #2ecc71;
+      z-index: 20;
+      opacity: 0.7;
+    }
+
+    #status-dot.alert {
+      background: #e74c3c;
+      opacity: 1;
+      animation: blink 0.5s ease-in-out infinite;
+    }
+
+    @keyframes blink {
+      50% { opacity: 0.3; }
+    }
+  </style>
+</head>
+<body>
+  <div id="alert-frame"></div>
+  <div id="alert-banner">
+    <div class="city" id="city-name"></div>
+    <div class="message" id="alert-message"></div>
+  </div>
+  <iframe id="news-iframe" src="" sandbox="allow-scripts allow-same-origin allow-popups"></iframe>
+  <div id="status-dot"></div>
+
+  <script>
+    const frame = document.getElementById('alert-frame');
+    const banner = document.getElementById('alert-banner');
+    const cityName = document.getElementById('city-name');
+    const alertMessage = document.getElementById('alert-message');
+    const statusDot = document.getElementById('status-dot');
+    const iframe = document.getElementById('news-iframe');
+
+    let lastState = null;
+
+    // Load the news feed URL from config
+    async function loadNewsUrl() {
+      try {
+        const res = await fetch('/api/config');
+        const config = await res.json();
+        iframe.src = config.browserUrl || 'https://www.n12.co.il/';
+      } catch (e) {
+        iframe.src = 'https://www.n12.co.il/';
+      }
+    }
+
+    async function pollAlertStatus() {
+      try {
+        const res = await fetch('/api/alert-status');
+        const status = await res.json();
+        updateDisplay(status);
+      } catch (e) {
+        // Server unreachable - keep current state
+      }
+    }
+
+    function updateDisplay(status) {
+      if (status.active) {
+        // DANGER - siren active
+        frame.className = 'danger';
+        banner.className = 'danger';
+        statusDot.className = 'alert';
+        cityName.textContent = status.areas.join(' | ');
+        alertMessage.textContent = status.title || 'התרעה פעילה';
+      } else if (status.timestamp && lastState !== 'safe') {
+        // Event just ended - show green
+        frame.className = 'safe';
+        banner.className = 'safe';
+        statusDot.className = '';
+        cityName.textContent = 'האירוע הסתיים';
+        alertMessage.textContent = 'The event is over - ניתן לצאת מהמרחב המוגן';
+
+        // Clear green frame after 30 seconds
+        setTimeout(() => {
+          frame.className = '';
+          banner.className = '';
+        }, 30000);
+
+        lastState = 'safe';
+      }
+
+      if (status.active) {
+        lastState = 'danger';
+      }
+    }
+
+    // Initialize
+    loadNewsUrl();
+    pollAlertStatus();
+    // Poll every 1 second for responsive visual updates
+    setInterval(pollAlertStatus, 1000);
+  </script>
+</body>
+</html>

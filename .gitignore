@@ -1,1 +1,7 @@
 node_modules/
+dist/
+installer/*.wixobj
+installer/public.wxs
+installer/assets.wxs
+installer/systray2.wxs
+.wixrc

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <Product
+    Id="*"
+    Name="RedAlert"
+    Language="1033"
+    Version="1.0.0"
+    Manufacturer="RedAlert Project"
+    UpgradeCode="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
+
+    <Package
+      InstallerVersion="200"
+      Compressed="yes"
+      InstallScope="perUser"
+      Description="Pikud HaOref Siren Monitor with N12 Live Feed" />
+
+    <MajorUpgrade DowngradeErrorMessage="A newer version of RedAlert is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="LocalAppDataFolder">
+        <Directory Id="INSTALLFOLDER" Name="RedAlert" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="AppMenuFolder" Name="RedAlert" />
+      </Directory>
+      <Directory Id="StartupFolder" />
+    </Directory>
+
+    <DirectoryRef Id="INSTALLFOLDER">
+      <Component Id="MainExe" Guid="b2c3d4e5-f6a7-8901-bcde-f12345678901">
+        <File Id="RedAlertExe" Source="$(var.DistDir)\RedAlert.exe" KeyPath="yes" />
+      </Component>
+      <Component Id="ConfigFile" Guid="c3d4e5f6-a7b8-9012-cdef-123456789012">
+        <File Id="ConfigJson" Source="$(var.DistDir)\config.json" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="AppMenuFolder">
+      <Component Id="StartMenuShortcut" Guid="d4e5f6a7-b8c9-0123-defa-234567890123">
+        <Shortcut Id="AppShortcut"
+          Name="RedAlert"
+          Description="Pikud HaOref Siren Monitor"
+          Target="[INSTALLFOLDER]RedAlert.exe"
+          WorkingDirectory="INSTALLFOLDER" />
+        <RemoveFolder Id="CleanAppMenu" On="uninstall" />
+        <RegistryValue Root="HKCU" Key="Software\RedAlert" Name="installed" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="StartupFolder">
+      <Component Id="StartupShortcut" Guid="e5f6a7b8-c9d0-1234-efab-345678901234">
+        <Shortcut Id="StartupLink"
+          Name="RedAlert"
+          Target="[INSTALLFOLDER]RedAlert.exe"
+          WorkingDirectory="INSTALLFOLDER" />
+        <RegistryValue Root="HKCU" Key="Software\RedAlert" Name="autostart" Type="integer" Value="1" KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="MainFeature" Title="RedAlert" Level="1">
+      <ComponentRef Id="MainExe" />
+      <ComponentRef Id="ConfigFile" />
+      <ComponentRef Id="StartMenuShortcut" />
+      <ComponentGroupRef Id="PublicFiles" />
+      <ComponentGroupRef Id="AssetFiles" />
+      <ComponentGroupRef Id="Systray2Files" />
+    </Feature>
+
+    <Feature Id="AutoStart" Title="Start with Windows" Level="1">
+      <ComponentRef Id="StartupShortcut" />
+    </Feature>
+
+  </Product>
+</Wix>

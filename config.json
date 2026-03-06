@@ -1,0 +1,13 @@
+{
+  "areas": [],
+  "pollInterval": 5000,
+  "alertActions": {
+    "openBrowser": true,
+    "notification": true,
+    "sound": true
+  },
+  "browserUrl": "https://www.n12.co.il/",
+  "alertCooldown": 60000,
+  "autoStart": false,
+  "configPort": 3847
+}

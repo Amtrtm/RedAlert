@@ -9,6 +9,7 @@ import { getConfig } from './configManager.js';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 let systray = null;
+let menuItems = [];
 
 const normalIcon = readFileSync(join(__dirname, '..', 'assets', 'icon.ico')).toString('base64');
 const alertIcon = readFileSync(join(__dirname, '..', 'assets', 'icon-alert.ico')).toString('base64');
@@ -19,7 +20,7 @@ export function createTray({ onStart, onStop }) {
       icon: normalIcon,
       title: 'RedAlert',
       tooltip: 'RedAlert - Pikud HaOref Monitor',
-      items: [
+      items: menuItems = [
         { title: 'RedAlert - Active', tooltip: 'Status', enabled: false },
         SysTray.separator,
         { title: 'Open Config Panel', tooltip: 'Open settings in browser', enabled: true },
@@ -75,7 +76,8 @@ export function setAlertMode(isAlert) {
     menu: {
       icon: isAlert ? alertIcon : normalIcon,
       title: 'RedAlert',
-      tooltip: isAlert ? 'ALERT ACTIVE!' : 'RedAlert - Monitoring'
+      tooltip: isAlert ? 'ALERT ACTIVE!' : 'RedAlert - Monitoring',
+      items: menuItems
     }
   });
 

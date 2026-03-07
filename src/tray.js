@@ -81,9 +81,8 @@ export function setAlertMode(isAlert) {
     }
   });
 
-  if (isAlert) {
-    setTimeout(() => setAlertMode(false), 30000);
-  }
+  // Alert mode is cleared by the safety timer callback in alertHandler.js
+  // Do NOT auto-reset here — the 10-minute safety timer handles it
 }
 
 function setStatusText(text) {

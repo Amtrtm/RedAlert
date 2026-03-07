@@ -5,3 +5,9 @@ installer/public.wxs
 installer/assets.wxs
 installer/systray2.wxs
 .wixrc
+# Test artifacts
+test-results/
+playwright-report/
+/blob-report
+/playwright/.cache/
+.claude/

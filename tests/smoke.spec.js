@@ -2,6 +2,7 @@ import { test, expect } from '@playwright/test';
 
 // Helper function to get CSRF token
 async function getCsrfToken(page) {
+  await page.waitForTimeout(100); // Small delay to avoid rate limiting
   const response = await page.request.get('/api/csrf-token');
   const data = await response.json();
   return data.token;
@@ -127,6 +128,7 @@ test.describe('RedAlert Smoke Tests', () => {
 
   test('Validate input - empty areas saved', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     
     // Clear areas and save
     await page.fill('#areas', '');
@@ -139,14 +141,14 @@ test.describe('RedAlert Smoke Tests', () => {
 
   test('Config panel has footer', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     
     const footer = page.locator('.nd-footer');
     await expect(footer).toContainText('RedAlert');
   });
 
   test('Refresh history button works', async ({ page }) => {
-    await page.goto('/');
-    
+    await page.goto('/');    await page.waitForLoadState('networkidle');    
     const refreshBtn = page.locator('#refreshHistory');
     await expect(refreshBtn).toBeVisible();
     await refreshBtn.click();
@@ -157,6 +159,7 @@ test.describe('RedAlert Smoke Tests', () => {
 
   test('Browser URL accepts valid HTTPS', async ({ page }) => {
     await page.goto('/');
+    await page.waitForLoadState('networkidle');
     
     const urls = [
       'https://www.n12.co.il/',

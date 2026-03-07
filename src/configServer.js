@@ -31,11 +31,12 @@ export function startConfigServer({ onConfigUpdate }) {
     next();
   });
 
-  // Rate limiting
+  // Rate limiting (skip for localhost/testing)
   const limiter = rateLimit({
     windowMs: 60000, // 1 minute
     max: 100, // limit each IP to 100 requests per windowMs
-    message: 'Too many requests from this IP, please try again later.'
+    message: 'Too many requests from this IP, please try again later.',
+    skip: (req) => req.ip === '127.0.0.1' || req.ip === '::1' || req.connection.remoteAddress === '127.0.0.1'
   });
   app.use(limiter);
 

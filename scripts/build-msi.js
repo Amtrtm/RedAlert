@@ -4,7 +4,7 @@
  *
  * Prerequisites: run `node scripts/build.js` first
  * Usage: node scripts/build-msi.js
- * Output: dist/RedAlert-1.0.0.msi
+ * Output: dist/RedAlert-1.1.0.msi
  */
 import { execFileSync } from 'child_process';
 import { existsSync, writeFileSync, mkdirSync } from 'fs';
@@ -38,33 +38,35 @@ console.log('=== RedAlert MSI Build ===\n');
 if (!existsSync(INSTALLER_DIR)) mkdirSync(INSTALLER_DIR, { recursive: true });
 
 // Step 1: Harvest directories with heat.exe
+// Use -dr to target the correct subdirectory IDs defined in the WiX XML.
+// Do NOT use -srd — we need the directory structure preserved.
 console.log('1. Harvesting directories...');
 
-// Harvest public/
+// Harvest public/ → installs to INSTALLFOLDER\public\
 execFileSync(HEAT, [
   'dir', join(DIST, 'public'),
   '-cg', 'PublicFiles',
-  '-dr', 'INSTALLFOLDER',
+  '-dr', 'PublicFolder',
   '-srd', '-ag', '-sfrag',
   '-var', 'var.PublicDir',
   '-out', join(INSTALLER_DIR, 'public.wxs'),
 ], { stdio: 'inherit' });
 
-// Harvest assets/
+// Harvest assets/ → installs to INSTALLFOLDER\assets\
 execFileSync(HEAT, [
   'dir', join(DIST, 'assets'),
   '-cg', 'AssetFiles',
-  '-dr', 'INSTALLFOLDER',
+  '-dr', 'AssetsFolder',
   '-srd', '-ag', '-sfrag',
   '-var', 'var.AssetsDir',
   '-out', join(INSTALLER_DIR, 'assets.wxs'),
 ], { stdio: 'inherit' });
 
-// Harvest node_modules/systray2/
+// Harvest node_modules/systray2/ → installs to INSTALLFOLDER\node_modules\systray2\
 execFileSync(HEAT, [
   'dir', join(DIST, 'node_modules', 'systray2'),
   '-cg', 'Systray2Files',
-  '-dr', 'INSTALLFOLDER',
+  '-dr', 'Systray2Folder',
   '-srd', '-ag', '-sfrag',
   '-var', 'var.Systray2Dir',
   '-out', join(INSTALLER_DIR, 'systray2.wxs'),
@@ -98,7 +100,13 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
 
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="LocalAppDataFolder">
-        <Directory Id="INSTALLFOLDER" Name="RedAlert" />
+        <Directory Id="INSTALLFOLDER" Name="RedAlert">
+          <Directory Id="PublicFolder" Name="public" />
+          <Directory Id="AssetsFolder" Name="assets" />
+          <Directory Id="NodeModulesFolder" Name="node_modules">
+            <Directory Id="Systray2Folder" Name="systray2" />
+          </Directory>
+        </Directory>
       </Directory>
       <Directory Id="ProgramMenuFolder">
         <Directory Id="AppMenuFolder" Name="RedAlert" />
@@ -195,3 +203,10 @@ console.log('\nUsers can double-click to install. Includes:');
 console.log('  - Start Menu shortcut');
 console.log('  - Auto-start with Windows');
 console.log('  - Installs to AppData (no admin required)');
+console.log('\nInstall directory structure:');
+console.log('  %LOCALAPPDATA%\\RedAlert\\');
+console.log('    RedAlert.exe');
+console.log('    config.json');
+console.log('    public\\       (web UI)');
+console.log('    assets\\       (icons, sounds)');
+console.log('    node_modules\\systray2\\  (tray binary)');

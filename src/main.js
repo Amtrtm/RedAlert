@@ -1,7 +1,7 @@
 import { execFileSync } from 'child_process';
 import { loadConfig, getConfig } from './configManager.js';
 import AlertPoller from './alertPoller.js';
-import { handleAlert, clearAlert } from './alertHandler.js';
+import { handleAlert, clearAlert, setOnClearCallback } from './alertHandler.js';
 import { startConfigServer } from './configServer.js';
 import { createTray, setAlertMode, killTray } from './tray.js';
 
@@ -29,10 +29,8 @@ poller.on('alert', (alert) => {
   setAlertMode(true);
 });
 
-poller.on('clear', () => {
-  clearAlert();
-  setAlertMode(false);
-});
+// Safety timer in alertHandler manages the clear — tray icon updates via callback
+setOnClearCallback(() => setAlertMode(false));
 
 poller.on('status', (status) => {
   if (status.error) {

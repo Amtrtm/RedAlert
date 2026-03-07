@@ -289,25 +289,39 @@
       }
     }
 
+    function formatCountdown(ms) {
+      const totalSec = Math.ceil(ms / 1000);
+      const min = Math.floor(totalSec / 60);
+      const sec = totalSec % 60;
+      return min + ':' + String(sec).padStart(2, '0');
+    }
+
     function updateDisplay(status) {
       if (status.active) {
-        // DANGER - siren active
+        // DANGER - siren active, show countdown in status bar
         frame.className = 'danger';
         banner.className = 'danger';
         statusBar.className = 'danger';
-        statusBar.textContent = '\u26a0 \u05d4\u05ea\u05e8\u05e2\u05d4 \u05e4\u05e2\u05d9\u05dc\u05d4 - \u05d4\u05d9\u05db\u05e0\u05e1\u05d5 \u05dc\u05de\u05e8\u05d7\u05d1 \u05d4\u05de\u05d5\u05d2\u05df!';
         dismissBtn.style.display = 'none';
         cityName.textContent = status.areas.join(' | ');
         alertMessage.textContent = status.title || 'Active Alert';
         lastState = 'danger';
 
+        if (status.safetyRemaining != null) {
+          const countdown = formatCountdown(status.safetyRemaining);
+          statusBar.textContent = '\u26a0 \u05d4\u05d9\u05e9\u05d0\u05e8\u05d5 \u05d1\u05de\u05e8\u05d7\u05d1 \u05d4\u05de\u05d5\u05d2\u05df! \u05d6\u05de\u05df \u05d1\u05d8\u05d9\u05d7\u05d5\u05ea: ' + countdown;
+        } else {
+          statusBar.textContent = '\u26a0 \u05d4\u05ea\u05e8\u05e2\u05d4 \u05e4\u05e2\u05d9\u05dc\u05d4 - \u05d4\u05d9\u05db\u05e0\u05e1\u05d5 \u05dc\u05de\u05e8\u05d7\u05d1 \u05d4\u05de\u05d5\u05d2\u05df!';
+        }
+
       } else if (lastState === 'danger') {
+        // SAFE — safety timer expired, event truly over
         frame.className = 'safe';
         banner.className = 'safe';
         statusBar.className = '';
         statusBar.textContent = '\u2714 \u05d4\u05d0\u05d9\u05e8\u05d5\u05e2 \u05d4\u05e1\u05ea\u05d9\u05d9\u05dd - \u05e0\u05d9\u05ea\u05df \u05dc\u05e6\u05d0\u05ea \u05de\u05d4\u05de\u05e8\u05d7\u05d1 \u05d4\u05de\u05d5\u05d2\u05df';
         cityName.textContent = '\u05d4\u05d0\u05d9\u05e8\u05d5\u05e2 \u05d4\u05e1\u05ea\u05d9\u05d9\u05dd';
-        alertMessage.textContent = 'The event is over';
+        alertMessage.textContent = status.description || 'The event is over';
         dismissBtn.style.display = 'block';
         lastState = 'safe';
 

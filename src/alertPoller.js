@@ -14,7 +14,6 @@ class AlertPoller extends EventEmitter {
     this.timer = null;
     this.lastAlertId = null;
     this.consecutiveErrors = 0;
-    this.wasActive = false;
   }
 
   start() {
@@ -52,10 +51,6 @@ class AlertPoller extends EventEmitter {
       this.consecutiveErrors = 0;
 
       if (!text || text.trim() === '') {
-        if (this.wasActive) {
-          this.wasActive = false;
-          this.emit('clear');
-        }
         this.emit('status', { polling: true, error: null });
         return;
       }
@@ -67,7 +62,6 @@ class AlertPoller extends EventEmitter {
       }
 
       this.lastAlertId = alert.id;
-      this.wasActive = true;
       this.emit('alert', alert);
       this.emit('status', { polling: true, error: null });
 

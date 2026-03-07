@@ -11,16 +11,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const alertCooldowns = new Map();
 const alertHistory = [];
 
+// Safety timer: minimum 10 minutes must pass with no new alerts in our region
+const SAFETY_DURATION_MS = 10 * 60 * 1000; // 10 minutes
+let safetyTimer = null;
+let lastRegionalAlertTime = null;
+
 // Current alert state for the alert-view page
 let currentAlertState = {
   active: false,
   areas: [],
   title: '',
   description: '',
-  timestamp: null
+  timestamp: null,
+  safetyCountdown: null
 };
 
 let browserOpen = false;
+let onClearCallback = null;
+
+export function setOnClearCallback(cb) {
+  onClearCallback = cb;
+}
 
 export function handleAlert(alert) {
   const config = getConfig();
@@ -52,13 +63,27 @@ export function handleAlert(alert) {
 
   console.log(`SIREN in your area: ${matchedAreas.join(', ')}`);
 
+  // Track when the last alert hit our region
+  lastRegionalAlertTime = now;
+
+  // Cancel any pending safety timer — new alert resets the countdown
+  if (safetyTimer) {
+    clearTimeout(safetyTimer);
+    safetyTimer = null;
+    console.log('Safety timer RESET — new alert in region');
+  }
+
+  // Start the safety timer (10 min from now)
+  startSafetyTimer();
+
   // Update current alert state for the alert-view page
   currentAlertState = {
     active: true,
     areas: matchedAreas,
     title: alert.title || 'התרעה',
     description: alert.desc || '',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    safetyCountdown: lastRegionalAlertTime + SAFETY_DURATION_MS
   };
 
   const actions = config.alertActions;
@@ -75,6 +100,20 @@ export function handleAlert(alert) {
     browserOpen = true;
     openBrowser(`http://localhost:${config.configPort}/alert-view.html`);
   }
+}
+
+function startSafetyTimer() {
+  safetyTimer = setTimeout(() => {
+    safetyTimer = null;
+    const elapsed = Date.now() - lastRegionalAlertTime;
+    if (elapsed >= SAFETY_DURATION_MS) {
+      console.log(`Safety timer expired — ${SAFETY_DURATION_MS / 60000} minutes with no alerts in region. Event is over.`);
+      clearAlertSafe();
+    }
+  }, SAFETY_DURATION_MS);
+
+  const expiresAt = new Date(lastRegionalAlertTime + SAFETY_DURATION_MS);
+  console.log(`Safety timer started — event will clear at ${expiresAt.toLocaleTimeString('he-IL')} (10 min from last regional alert)`);
 }
 
 function findMatchingAreas(alert, configuredAreas) {
@@ -167,21 +206,40 @@ function openDefault(url) {
   });
 }
 
-export function clearAlert() {
+// Called by the safety timer after 10 minutes of silence
+function clearAlertSafe() {
   browserOpen = false;
   if (currentAlertState.active) {
-    console.log('Alert cleared - event is over');
+    console.log('Alert cleared — 10 minutes passed, event is over');
     currentAlertState = {
       active: false,
       areas: currentAlertState.areas,
       title: 'האירוע הסתיים',
-      description: 'The event is over',
-      timestamp: new Date().toISOString()
+      description: 'עברו 10 דקות ללא התרעות באזורך',
+      timestamp: new Date().toISOString(),
+      safetyCountdown: null
     };
+    if (onClearCallback) onClearCallback();
   }
 }
 
+// Called externally — does NOT immediately clear, only resets browser flag
+// The actual clear happens only via the safety timer
+export function clearAlert() {
+  // Do nothing here — the safety timer handles the actual clear
+  // This prevents premature "event is over" when the API goes empty
+}
+
 export function getAlertStatus() {
+  // Include remaining countdown time so the UI can show it
+  if (currentAlertState.active && lastRegionalAlertTime) {
+    const remaining = Math.max(0, (lastRegionalAlertTime + SAFETY_DURATION_MS) - Date.now());
+    return {
+      ...currentAlertState,
+      safetyRemaining: remaining,
+      safetyDuration: SAFETY_DURATION_MS
+    };
+  }
   return currentAlertState;
 }
 

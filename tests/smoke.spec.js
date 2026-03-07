@@ -1,5 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+// Helper function to get CSRF token
+async function getCsrfToken(page) {
+  const response = await page.request.get('/api/csrf-token');
+  const data = await response.json();
+  return data.token;
+}
+
 test.describe('RedAlert Smoke Tests', () => {
   
   test('Config panel loads and displays correctly', async ({ page }) => {
@@ -69,7 +76,7 @@ test.describe('RedAlert Smoke Tests', () => {
     const intervals = ['3s', '5s', '10s', '15s', '30s'];
     
     for (const interval of intervals) {
-      const radio = page.locator(`:text("${interval}")`);
+      const radio = page.getByText(interval, { exact: true });
       await expect(radio).toBeVisible();
     }
   });
@@ -77,11 +84,11 @@ test.describe('RedAlert Smoke Tests', () => {
   test('Validate alert actions checkboxes', async ({ page }) => {
     await page.goto('/');
     
-    const actions = ['openBrowser', 'notification', 'sound'];
+    const actions = ['Open Browser', 'Desktop Notification', 'Alert Sound'];
     
     for (const action of actions) {
-      const checkbox = page.locator(`#${action}`);
-      await expect(checkbox).toBeVisible();
+      const toggle = page.locator(`text=${action}`);
+      await expect(toggle).toBeVisible();
     }
   });
 
@@ -167,8 +174,13 @@ test.describe('RedAlert Smoke Tests', () => {
   });
 
   test('API config endpoint validates input', async ({ page }) => {
+    const csrfToken = await getCsrfToken(page);
+    
     // Try invalid pollInterval
     const response = await page.request.post('/api/config', {
+      headers: {
+        'x-csrf-token': csrfToken
+      },
       data: {
         areas: ['Test'],
         pollInterval: 100, // Too low
@@ -183,7 +195,12 @@ test.describe('RedAlert Smoke Tests', () => {
   });
 
   test('API config endpoint accepts valid input', async ({ page }) => {
+    const csrfToken = await getCsrfToken(page);
+    
     const response = await page.request.post('/api/config', {
+      headers: {
+        'x-csrf-token': csrfToken
+      },
       data: {
         areas: ['תל אביב'],
         pollInterval: 5000,

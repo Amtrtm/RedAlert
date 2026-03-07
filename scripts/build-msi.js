@@ -93,6 +93,9 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
     <MajorUpgrade DowngradeErrorMessage="A newer version of RedAlert is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
+    <Icon Id="RedAlertIcon" SourceFile="$(var.DistDir)\\assets\\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="RedAlertIcon" />
+
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="LocalAppDataFolder">
         <Directory Id="INSTALLFOLDER" Name="RedAlert" />
@@ -118,7 +121,8 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
           Name="RedAlert"
           Description="Pikud HaOref Siren Monitor"
           Target="[INSTALLFOLDER]RedAlert.exe"
-          WorkingDirectory="INSTALLFOLDER" />
+          WorkingDirectory="INSTALLFOLDER"
+          Icon="RedAlertIcon" />
         <RemoveFolder Id="CleanAppMenu" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\\RedAlert" Name="installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>
@@ -129,7 +133,8 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
         <Shortcut Id="StartupLink"
           Name="RedAlert"
           Target="[INSTALLFOLDER]RedAlert.exe"
-          WorkingDirectory="INSTALLFOLDER" />
+          WorkingDirectory="INSTALLFOLDER"
+          Icon="RedAlertIcon" />
         <RegistryValue Root="HKCU" Key="Software\\RedAlert" Name="autostart" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </DirectoryRef>

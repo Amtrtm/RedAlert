@@ -1,15 +1,26 @@
-# RedAlert
+<p align="center">
+  <img src="assets/icon.png" alt="RedAlert Icon" width="128" height="128">
+</p>
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Platform](https://img.shields.io/badge/Platform-Windows-blue.svg)]()
-[![Runtime](https://img.shields.io/badge/Node.js-18%2B-green.svg)](https://nodejs.org/)
-[![Language](https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg)]()
+<h1 align="center">RedAlert</h1>
+
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/Platform-Windows-blue.svg" alt="Platform">
+  <a href="https://nodejs.org/"><img src="https://img.shields.io/badge/Node.js-18%2B-green.svg" alt="Runtime"></a>
+  <img src="https://img.shields.io/badge/Language-JavaScript-F7DF1E.svg" alt="Language">
+  <a href="https://github.com/Amtrtm/RedAlert/releases/latest"><img src="https://img.shields.io/badge/Download-MSI%20Installer-e74c3c.svg" alt="Download MSI"></a>
+</p>
+
+<p align="center"><strong>Real-time Pikud HaOref (Home Front Command) siren monitor for Windows</strong></p>
+
+---
 
 ## Description
 
-RedAlert is a Node.js system tray application that monitors the Pikud HaOref (Israeli Home Front Command) API for real-time missile and rocket alerts. When a siren is detected in the user's configured area, the app automatically opens Google Chrome to the N12 live news feed so you can immediately see what is happening.
+RedAlert is a Windows system tray application that monitors the Pikud HaOref (Israeli Home Front Command) API for real-time missile and rocket alerts. When a siren is detected in your configured area, the app automatically opens a live N12 news feed with HLS video streaming, shows desktop notifications, and plays an alert sound.
 
-The application runs quietly in the Windows system tray, polling the alert API at a configurable interval. It provides desktop notifications, an audible alert sound, and a web-based configuration panel for managing monitored areas and alert preferences.
+The application includes a 10-minute safety timer that keeps the alert active until the official all-clear is received, and a web-based configuration panel for managing monitored areas and alert preferences.
 
 ## Features
 

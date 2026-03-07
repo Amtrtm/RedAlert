@@ -20,7 +20,11 @@ console.log('=== RedAlert Build ===\n');
 // Step 1: Clean & prepare dist
 console.log('1. Preparing dist directory...');
 if (existsSync(DIST)) {
-  rmSync(DIST, { recursive: true, force: true });
+  try {
+    rmSync(DIST, { recursive: true, force: true });
+  } catch (e) {
+    console.log('   Could not fully clean dist/ (may be locked). Overwriting files in-place.');
+  }
 }
 mkdirSync(DIST, { recursive: true });
 
@@ -38,12 +42,14 @@ await build({
   minify: false,
   sourcemap: false,
   banner: {
-    js: 'const __bundle_dirname = __dirname;'
+    js: [
+      'const __bundle_dirname = __dirname;',
+      'const __bundled_import_meta_url = require("url").pathToFileURL(__filename).href;',
+    ].join('\n')
   },
   define: {
     'import.meta.url': '__bundled_import_meta_url',
   },
-  inject: [join(ROOT, 'scripts', 'esm-shim.js')],
 });
 console.log('   Bundle created: dist/bundle.cjs');
 

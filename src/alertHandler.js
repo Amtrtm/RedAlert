@@ -6,7 +6,8 @@ import open from 'open';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Resolve the real app directory (not the pkg snapshot)
+const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
 
 const alertCooldowns = new Map();
 const alertHistory = [];
@@ -161,7 +162,7 @@ function showNotification(alert, matchedAreas) {
     wait: true,
     timeout: 30,
     appID: 'RedAlert.PikudHaoref.Monitor',
-    icon: join(__dirname, '..', 'assets', 'icon-alert.ico')
+    icon: join(appDir, 'assets', 'icon-alert.ico')
   }, (err, response, metadata) => {
     if (err) {
       console.error('Notification error:', err.message);
@@ -191,7 +192,7 @@ function showPowerShellToast(alert, matchedAreas) {
 }
 
 function playAlertSound() {
-  const soundPath = join(__dirname, '..', 'assets', 'alert.wav');
+  const soundPath = join(appDir, 'assets', 'alert.wav');
   execFile('powershell.exe', [
     '-NoProfile', '-Command',
     `(New-Object Media.SoundPlayer '${soundPath}').PlaySync()`

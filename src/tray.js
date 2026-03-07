@@ -1,20 +1,40 @@
 import SysTrayModule from 'systray2';
 const SysTray = SysTrayModule.default || SysTrayModule;
-import { readFileSync } from 'fs';
+import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import open from 'open';
 import { getConfig } from './configManager.js';
+import { log } from './logger.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Resolve the real app directory (not the pkg snapshot)
+// In pkg, process.execPath is the real exe location on disk
+const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
 
 let systray = null;
 let menuItems = [];
 
-const normalIcon = readFileSync(join(__dirname, '..', 'assets', 'icon.ico')).toString('base64');
-const alertIcon = readFileSync(join(__dirname, '..', 'assets', 'icon-alert.ico')).toString('base64');
+const iconPath = join(appDir, 'assets', 'icon.ico');
+const alertIconPath = join(appDir, 'assets', 'icon-alert.ico');
+log.info('Icon path:', iconPath, 'exists:', existsSync(iconPath));
+log.info('Alert icon path:', alertIconPath, 'exists:', existsSync(alertIconPath));
+
+const normalIcon = readFileSync(iconPath).toString('base64');
+const alertIcon = readFileSync(alertIconPath).toString('base64');
 
 export function createTray({ onStart, onStop }) {
+  // systray2 looks for traybin/ relative to CWD first, then __dirname.
+  // In pkg, __dirname is a snapshot path that doesn't exist on disk.
+  // Switch CWD to the real systray2 module directory so it finds the binary.
+  const systray2Dir = join(appDir, 'node_modules', 'systray2');
+  const trayBin = join(systray2Dir, 'traybin', 'tray_windows_release.exe');
+  log.info('systray2 dir:', systray2Dir, 'binary exists:', existsSync(trayBin));
+
+  const origCwd = process.cwd();
+  try { process.chdir(systray2Dir); } catch (e) {
+    log.warn('Could not chdir to systray2 dir:', e.message);
+  }
+
   systray = new SysTray({
     menu: {
       icon: normalIcon,
@@ -32,6 +52,11 @@ export function createTray({ onStart, onStop }) {
     debug: false,
     copyDir: false
   });
+
+  // Restore CWD after tray init starts (async, but binary path is resolved immediately)
+  setTimeout(() => {
+    try { process.chdir(origCwd); } catch {}
+  }, 1000);
 
   systray.onClick(action => {
     switch (action.seq_id) {

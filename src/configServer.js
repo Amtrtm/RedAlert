@@ -3,8 +3,10 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { getConfig, updateConfig } from './configManager.js';
 import { getAlertHistory, getAlertStatus } from './alertHandler.js';
+import { log } from './logger.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+// Resolve the real app directory (not the pkg snapshot)
+const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
 
 let onConfigChange = null;
 
@@ -14,7 +16,9 @@ export function startConfigServer({ onConfigUpdate }) {
   const app = express();
 
   app.use(express.json());
-  app.use(express.static(join(__dirname, '..', 'public')));
+  const publicDir = join(appDir, 'public');
+  log.info('Serving static files from:', publicDir);
+  app.use(express.static(publicDir));
 
   app.get('/api/config', (req, res) => {
     res.json(getConfig());

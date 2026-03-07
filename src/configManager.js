@@ -2,8 +2,9 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const CONFIG_PATH = join(__dirname, '..', 'config.json');
+// Resolve the real app directory (not the pkg snapshot)
+const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
+const CONFIG_PATH = join(appDir, 'config.json');
 
 const DEFAULT_CONFIG = {
   areas: [],

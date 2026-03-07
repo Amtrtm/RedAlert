@@ -1,5 +1,3 @@
-import SysTrayModule from 'systray2';
-const SysTray = SysTrayModule.default || SysTrayModule;
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
@@ -8,21 +6,53 @@ import { getConfig } from './configManager.js';
 import { log } from './logger.js';
 
 // Resolve the real app directory (not the pkg snapshot)
-// In pkg, process.execPath is the real exe location on disk
 const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
 
 let systray = null;
 let menuItems = [];
 
-const iconPath = join(appDir, 'assets', 'icon.ico');
-const alertIconPath = join(appDir, 'assets', 'icon-alert.ico');
-log.info('Icon path:', iconPath, 'exists:', existsSync(iconPath));
-log.info('Alert icon path:', alertIconPath, 'exists:', existsSync(alertIconPath));
+// Lazy-load icons — do NOT read files at module top-level (crashes before error handler)
+let normalIcon = null;
+let alertIcon = null;
 
-const normalIcon = readFileSync(iconPath).toString('base64');
-const alertIcon = readFileSync(alertIconPath).toString('base64');
+function loadIcons() {
+  const iconPath = join(appDir, 'assets', 'icon.ico');
+  const alertIconPath = join(appDir, 'assets', 'icon-alert.ico');
+  log.info('Icon path:', iconPath, 'exists:', existsSync(iconPath));
+  log.info('Alert icon path:', alertIconPath, 'exists:', existsSync(alertIconPath));
+
+  try {
+    normalIcon = readFileSync(iconPath).toString('base64');
+  } catch (e) {
+    log.error('Failed to read icon.ico:', e.message);
+    normalIcon = '';
+  }
+  try {
+    alertIcon = readFileSync(alertIconPath).toString('base64');
+  } catch (e) {
+    log.error('Failed to read icon-alert.ico:', e.message);
+    alertIcon = normalIcon;
+  }
+}
+
+let SysTray = null;
 
 export function createTray({ onStart, onStop }) {
+  // Load icons at call time (inside try/catch from main.js), not at import time
+  loadIcons();
+
+  // Load systray2 module
+  let SysTrayModule;
+  try {
+    SysTrayModule = require('systray2');
+  } catch (e) {
+    log.error('Failed to require systray2:', e.message);
+    log.error('Module paths:', JSON.stringify(require.resolve.paths?.('systray2') || 'N/A'));
+    throw e;
+  }
+  SysTray = SysTrayModule.default || SysTrayModule;
+  log.info('systray2 loaded successfully');
+
   // systray2 looks for traybin/ relative to CWD first, then __dirname.
   // In pkg, __dirname is a snapshot path that doesn't exist on disk.
   // Switch CWD to the real systray2 module directory so it finds the binary.
@@ -53,7 +83,7 @@ export function createTray({ onStart, onStop }) {
     copyDir: false
   });
 
-  // Restore CWD after tray init starts (async, but binary path is resolved immediately)
+  // Restore CWD after tray init starts
   setTimeout(() => {
     try { process.chdir(origCwd); } catch {}
   }, 1000);

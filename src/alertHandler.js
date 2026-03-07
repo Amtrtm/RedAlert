@@ -33,11 +33,37 @@ export function setOnClearCallback(cb) {
   onClearCallback = cb;
 }
 
+// Pikud HaOref sends "האירוע הסתיים" as an alert when the event is officially over
+const EVENT_OVER_TITLE = 'האירוע הסתיים';
+
 export function handleAlert(alert) {
   const config = getConfig();
   const matchedAreas = findMatchingAreas(alert, config.areas);
 
   if (matchedAreas.length === 0) return;
+
+  // Check if this is an "event over" message from Pikud HaOref
+  if (alert.title === EVENT_OVER_TITLE) {
+    console.log(`Official "event over" received for our area: ${matchedAreas.join(', ')}`);
+
+    alertHistory.unshift({
+      timestamp: new Date().toISOString(),
+      id: alert.id,
+      title: alert.title,
+      areas: matchedAreas,
+      category: alert.cat,
+      description: 'הודעה רשמית מפיקוד העורף - האירוע הסתיים'
+    });
+    if (alertHistory.length > 100) alertHistory.length = 100;
+
+    // Official all-clear — cancel safety timer and clear the alert
+    if (safetyTimer) {
+      clearTimeout(safetyTimer);
+      safetyTimer = null;
+    }
+    clearAlertSafe(true);
+    return;
+  }
 
   const cooldownKey = alert.id || matchedAreas.join(',');
   const now = Date.now();
@@ -206,19 +232,23 @@ function openDefault(url) {
   });
 }
 
-// Called by the safety timer after 10 minutes of silence
-function clearAlertSafe() {
+// Called when event is officially over (Pikud HaOref message or safety timer)
+function clearAlertSafe(isOfficial) {
   browserOpen = false;
   if (currentAlertState.active) {
-    console.log('Alert cleared — 10 minutes passed, event is over');
+    const reason = isOfficial
+      ? 'הודעה רשמית מפיקוד העורף'
+      : 'עברו 10 דקות ללא התרעות באזורך';
+    console.log(`Alert cleared — ${isOfficial ? 'official Pikud HaOref all-clear' : '10 minutes with no alerts in region'}`);
     currentAlertState = {
       active: false,
       areas: currentAlertState.areas,
       title: 'האירוע הסתיים',
-      description: 'עברו 10 דקות ללא התרעות באזורך',
+      description: reason,
       timestamp: new Date().toISOString(),
       safetyCountdown: null
     };
+    lastRegionalAlertTime = null;
     if (onClearCallback) onClearCallback();
   }
 }

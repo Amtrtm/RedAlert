@@ -91,6 +91,18 @@ All settings are managed through the web-based config panel at `http://localhost
 - This project is **not affiliated** with the Israeli government, the IDF, or Pikud HaOref in any way.
 - This tool is intended for **personal use only**. Always follow the official Home Front Command instructions and guidelines during an emergency. Do not rely solely on this application for life-safety decisions.
 
+## Security
+
+This application has been subject to a comprehensive security review. For detailed information, including:
+- NPM dependency vulnerability audit
+- Code-level security findings
+- Threat model analysis
+- Security recommendations
+
+See [**SECURITY.md**](SECURITY.md).
+
+**TL;DR:** Production runtime is secure (0 vulnerabilities). Some code-level improvements recommended for defense-in-depth.
+
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

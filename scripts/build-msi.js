@@ -147,6 +147,12 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
       <ComponentRef Id="StartupShortcut" />
     </Feature>
 
+    <!-- Launch app after install -->
+    <CustomAction Id="LaunchApp" FileKey="RedAlertExe" ExeCommand="" Return="asyncNoWait" />
+    <InstallExecuteSequence>
+      <Custom Action="LaunchApp" After="InstallFinalize">NOT Installed OR REINSTALL</Custom>
+    </InstallExecuteSequence>
+
   </Product>
 </Wix>`;
 

@@ -16,7 +16,7 @@ const ROOT = join(__dirname, '..');
 const DIST = join(ROOT, 'dist');
 const WIX_BIN = join(ROOT, 'node_modules', 'wix-msi', 'wix_bin');
 const INSTALLER_DIR = join(ROOT, 'installer');
-const MSI_OUTPUT = join(DIST, 'RedAlert-1.0.0.msi');
+const MSI_OUTPUT = join(DIST, 'RedAlert-1.1.0.msi');
 
 // Verify prerequisites
 if (!existsSync(join(DIST, 'RedAlert.exe'))) {
@@ -80,7 +80,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
     Id="*"
     Name="RedAlert"
     Language="1033"
-    Version="1.0.0"
+    Version="1.1.0"
     Manufacturer="RedAlert Project"
     UpgradeCode="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
 

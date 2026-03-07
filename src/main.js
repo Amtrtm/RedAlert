@@ -13,30 +13,31 @@ log.info('Log file:', log.file);
 log.info('process.execPath:', process.execPath);
 log.info('process.cwd():', process.cwd());
 log.info('__dirname (snapshot):', typeof __dirname !== 'undefined' ? __dirname : 'N/A');
-log.info('LOCALAPPDATA:', process.env.LOCALAPPDATA ? '<USER_APPDATA>' : 'N/A');
+log.info('Platform:', process.platform);
 
 import { execFileSync, execFile } from 'child_process';
-import { existsSync } from 'fs';
-import { join } from 'path';
+import { isWindows, getChromePath } from './platform.js';
 import { loadConfig, getConfig } from './configManager.js';
 import AlertPoller from './alertPoller.js';
 import { handleAlert, clearAlert, setOnClearCallback } from './alertHandler.js';
 import { startConfigServer } from './configServer.js';
 import { createTray, setAlertMode, killTray } from './tray.js';
 
-// Register App ID for Windows toast notifications
-try {
-  execFileSync('powershell.exe', ['-NoProfile', '-Command', `
-    $appId = 'RedAlert.PikudHaoref.Monitor'
-    $key = 'HKCU:\\SOFTWARE\\Classes\\AppUserModelId\\' + $appId
-    if (-not (Test-Path $key)) {
-      New-Item -Path $key -Force | Out-Null
-      New-ItemProperty -Path $key -Name 'DisplayName' -Value 'RedAlert' -Force | Out-Null
-    }
-  `], { stdio: 'ignore' });
-  log.info('App ID registered for notifications');
-} catch (e) {
-  log.warn('App ID registration failed (non-critical):', e.message);
+// Register App ID for Windows toast notifications (Windows only)
+if (isWindows) {
+  try {
+    execFileSync('powershell.exe', ['-NoProfile', '-Command', `
+      $appId = 'RedAlert.PikudHaoref.Monitor'
+      $key = 'HKCU:\\SOFTWARE\\Classes\\AppUserModelId\\' + $appId
+      if (-not (Test-Path $key)) {
+        New-Item -Path $key -Force | Out-Null
+        New-ItemProperty -Path $key -Name 'DisplayName' -Value 'RedAlert' -Force | Out-Null
+      }
+    `], { stdio: 'ignore' });
+    log.info('App ID registered for notifications');
+  } catch (e) {
+    log.warn('App ID registration failed (non-critical):', e.message);
+  }
 }
 
 log.info('Loading config...');
@@ -107,15 +108,8 @@ if (!firstRunConfig.areas || firstRunConfig.areas.length === 0) {
 }
 
 function openConfigInChrome(url) {
-  const chromePaths = [
-    join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-    join(process.env['PROGRAMFILES'] || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-    join(process.env['PROGRAMFILES(X86)'] || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-  ];
-  log.info('Searching for Chrome:', chromePaths.join(', '));
-  const chromePath = chromePaths.find(p => {
-    try { return existsSync(p); } catch { return false; }
-  });
+  const chromePath = getChromePath();
+  log.info('Chrome path:', chromePath || 'not found');
 
   if (chromePath) {
     log.info('Found Chrome at:', chromePath);

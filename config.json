@@ -1,6 +1,9 @@
 {
-  "areas": [],
-  "pollInterval": 5000,
+  "areas": [
+    "תל אביב",
+    "ירושלים"
+  ],
+  "pollInterval": 30000,
   "alertActions": {
     "openBrowser": true,
     "notification": true,

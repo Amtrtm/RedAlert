@@ -5,6 +5,7 @@ import { createRequire } from 'module';
 import open from 'open';
 import { getConfig } from './configManager.js';
 import { log } from './logger.js';
+import { getTrayBinaryName, getTrayIconExtension } from './platform.js';
 
 const require = createRequire(import.meta.url);
 
@@ -19,8 +20,9 @@ let normalIcon = null;
 let alertIcon = null;
 
 function loadIcons() {
-  const iconPath = join(appDir, 'assets', 'icon.ico');
-  const alertIconPath = join(appDir, 'assets', 'icon-alert.ico');
+  const iconExt = getTrayIconExtension();
+  const iconPath = join(appDir, 'assets', `icon.${iconExt}`);
+  const alertIconPath = join(appDir, 'assets', `icon-alert.${iconExt}`);
   log.info('Icon path:', iconPath, 'exists:', existsSync(iconPath));
   log.info('Alert icon path:', alertIconPath, 'exists:', existsSync(alertIconPath));
 
@@ -33,7 +35,7 @@ function loadIcons() {
   try {
     alertIcon = readFileSync(alertIconPath).toString('base64');
   } catch (e) {
-    log.error('Failed to read icon-alert.ico:', e.message);
+    log.error('Failed to read icon-alert:', e.message);
     alertIcon = normalIcon;
   }
 }
@@ -59,7 +61,7 @@ export function createTray({ onStart, onStop }) {
   // In pkg, __dirname is a snapshot path that doesn't exist on disk.
   // Switch CWD to the real systray2 module directory so it finds the binary.
   const systray2Dir = join(appDir, 'node_modules', 'systray2');
-  const trayBin = join(systray2Dir, 'traybin', 'tray_windows_release.exe');
+  const trayBin = join(systray2Dir, 'traybin', getTrayBinaryName());
   log.info('systray2 dir:', systray2Dir, 'binary exists:', existsSync(trayBin));
 
   const origCwd = process.cwd();

@@ -1,8 +1,9 @@
 import { appendFileSync, mkdirSync } from 'fs';
 import { join } from 'path';
+import { getLogDir } from './platform.js';
 
-// Log to %LOCALAPPDATA%\RedAlert\redalert.log — works regardless of pkg snapshot paths
-const LOG_DIR = join(process.env.LOCALAPPDATA || '.', 'RedAlert');
+// Log to platform-appropriate directory — works regardless of pkg snapshot paths
+const LOG_DIR = getLogDir();
 const LOG_FILE = join(LOG_DIR, 'redalert.log');
 
 try { mkdirSync(LOG_DIR, { recursive: true }); } catch {}

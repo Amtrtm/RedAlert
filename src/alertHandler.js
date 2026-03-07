@@ -5,6 +5,7 @@ import notifier from 'node-notifier';
 import open from 'open';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { log } from './logger.js';
 
 // Resolve the real app directory (not the pkg snapshot)
 const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -45,7 +46,7 @@ export function handleAlert(alert) {
 
   // Check if this is an "event over" message from Pikud HaOref
   if (alert.title === EVENT_OVER_TITLE) {
-    console.log(`Official "event over" received for our area: ${matchedAreas.join(', ')}`);
+    log.info(`Official "event over" received for our area: ${matchedAreas.join(', ')}`);
 
     alertHistory.unshift({
       timestamp: new Date().toISOString(),
@@ -71,7 +72,7 @@ export function handleAlert(alert) {
   const lastAlert = alertCooldowns.get(cooldownKey);
 
   if (lastAlert && (now - lastAlert) < config.alertCooldown) {
-    console.log(`Alert ${cooldownKey} still in cooldown, skipping`);
+    log.info(`Alert ${cooldownKey} still in cooldown, skipping`);
     return;
   }
 
@@ -88,7 +89,7 @@ export function handleAlert(alert) {
 
   if (alertHistory.length > 100) alertHistory.length = 100;
 
-  console.log(`SIREN in your area: ${matchedAreas.join(', ')}`);
+  log.info(`SIREN in your area: ${matchedAreas.join(', ')}`);
 
   // Track when the last alert hit our region
   lastRegionalAlertTime = now;
@@ -97,7 +98,7 @@ export function handleAlert(alert) {
   if (safetyTimer) {
     clearTimeout(safetyTimer);
     safetyTimer = null;
-    console.log('Safety timer RESET — new alert in region');
+    log.info('Safety timer RESET — new alert in region');
   }
 
   // Start the safety timer (10 min from now)
@@ -134,13 +135,13 @@ function startSafetyTimer() {
     safetyTimer = null;
     const elapsed = Date.now() - lastRegionalAlertTime;
     if (elapsed >= SAFETY_DURATION_MS) {
-      console.log(`Safety timer expired — ${SAFETY_DURATION_MS / 60000} minutes with no alerts in region. Event is over.`);
+      log.info(`Safety timer expired — ${SAFETY_DURATION_MS / 60000} minutes with no alerts in region. Event is over.`);
       clearAlertSafe();
     }
   }, SAFETY_DURATION_MS);
 
   const expiresAt = new Date(lastRegionalAlertTime + SAFETY_DURATION_MS);
-  console.log(`Safety timer started — event will clear at ${expiresAt.toLocaleTimeString('he-IL')} (10 min from last regional alert)`);
+  log.info(`Safety timer started — event will clear at ${expiresAt.toLocaleTimeString('he-IL')} (10 min from last regional alert)`);
 }
 
 function findMatchingAreas(alert, configuredAreas) {
@@ -175,8 +176,18 @@ function showNotification(alert, matchedAreas) {
 }
 
 function showPowerShellToast(alert, matchedAreas) {
-  const title = (alert.title || 'Alert').replace(/'/g, "''");
-  const areas = matchedAreas.join(', ').replace(/'/g, "''");
+  // Properly escape XML special characters to prevent injection
+  const escapeXml = (str) =>
+    String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+
+  const title = escapeXml(alert.title || 'Alert');
+  const areas = escapeXml(matchedAreas.join(', '));
+
   execFile('powershell.exe', [
     '-NoProfile', '-Command',
     `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null;
@@ -187,7 +198,7 @@ function showPowerShellToast(alert, matchedAreas) {
      [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('RedAlert.PikudHaoref.Monitor').Show($toast);`
   ], (err) => {
     if (err) console.error('PowerShell toast error:', err.message);
-    else console.log('PowerShell toast shown successfully');
+    log.info('PowerShell toast shown successfully');
   });
 }
 
@@ -195,7 +206,7 @@ function playAlertSound() {
   const soundPath = join(appDir, 'assets', 'alert.wav');
   execFile('powershell.exe', [
     '-NoProfile', '-Command',
-    `(New-Object Media.SoundPlayer '${soundPath}').PlaySync()`
+    `(New-Object Media.SoundPlayer '${soundPath.replace(/'/g, "''")}').PlaySync()`
   ], (err) => {
     if (err) console.error('Sound playback error:', err.message);
   });
@@ -214,7 +225,7 @@ function openBrowser(url) {
   });
 
   if (chromePath) {
-    console.log('Opening Chrome:', url);
+    log.info('Opening Chrome:', url);
     execFile(chromePath, ['--new-window', url], (err) => {
       if (err) {
         console.error('Chrome launch error:', err.message);
@@ -222,7 +233,7 @@ function openBrowser(url) {
       }
     });
   } else {
-    console.log('Chrome not found, using default browser');
+    log.info('Chrome not found, using default browser');
     openDefault(url);
   }
 }
@@ -240,7 +251,7 @@ function clearAlertSafe(isOfficial) {
     const reason = isOfficial
       ? 'הודעה רשמית מפיקוד העורף'
       : 'עברו 10 דקות ללא התרעות באזורך';
-    console.log(`Alert cleared — ${isOfficial ? 'official Pikud HaOref all-clear' : '10 minutes with no alerts in region'}`);
+    log.info(`Alert cleared — ${isOfficial ? 'official Pikud HaOref all-clear' : '10 minutes with no alerts in region'}`);
     currentAlertState = {
       active: false,
       areas: currentAlertState.areas,

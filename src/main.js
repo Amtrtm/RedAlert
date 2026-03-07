@@ -13,7 +13,7 @@ log.info('Log file:', log.file);
 log.info('process.execPath:', process.execPath);
 log.info('process.cwd():', process.cwd());
 log.info('__dirname (snapshot):', typeof __dirname !== 'undefined' ? __dirname : 'N/A');
-log.info('LOCALAPPDATA:', process.env.LOCALAPPDATA);
+log.info('LOCALAPPDATA:', process.env.LOCALAPPDATA ? '<USER_APPDATA>' : 'N/A');
 
 import { execFileSync, execFile } from 'child_process';
 import { existsSync } from 'fs';

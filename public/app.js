@@ -1,4 +1,11 @@
+let csrfToken = '';
+
 document.addEventListener('DOMContentLoaded', async () => {
+  // Fetch CSRF token before any mutating requests
+  const tokenRes = await fetch('/api/csrf-token');
+  const tokenData = await tokenRes.json();
+  csrfToken = tokenData.token;
+
   await loadConfig();
   loadHistory();
 
@@ -45,7 +52,7 @@ async function saveConfig() {
 
   await fetch('/api/config', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
     body: JSON.stringify(config)
   });
 
@@ -53,7 +60,7 @@ async function saveConfig() {
 }
 
 async function testAlert() {
-  await fetch('/api/test-alert', { method: 'POST' });
+  await fetch('/api/test-alert', { method: 'POST', headers: { 'X-CSRF-Token': csrfToken } });
   showToast('Test alert triggered!');
 }
 

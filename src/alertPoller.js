@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events';
 import { getConfig } from './configManager.js';
+import { log } from './logger.js';
 
 const ALERTS_URL = 'https://www.oref.org.il/WarningMessages/alert/alerts.json';
 const HEADERS = {
@@ -20,14 +21,14 @@ class AlertPoller extends EventEmitter {
     const config = getConfig();
     this.poll();
     this.timer = setInterval(() => this.poll(), config.pollInterval);
-    console.log(`Polling started (every ${config.pollInterval / 1000}s)`);
+    log.info(`Polling started (every ${config.pollInterval / 1000}s)`);
   }
 
   stop() {
     if (this.timer) {
       clearInterval(this.timer);
       this.timer = null;
-      console.log('Polling stopped');
+      log.info('Polling stopped');
     }
   }
 
@@ -57,6 +58,12 @@ class AlertPoller extends EventEmitter {
 
       const alert = JSON.parse(text);
 
+      // Validate alert structure — reject malformed responses
+      if (!isValidAlert(alert)) {
+        log.warn('Invalid alert structure received, ignoring:', JSON.stringify(alert).slice(0, 200));
+        return;
+      }
+
       if (alert.id && alert.id === this.lastAlertId) {
         return;
       }
@@ -78,6 +85,24 @@ class AlertPoller extends EventEmitter {
       }
     }
   }
+}
+
+function isValidAlert(alert) {
+  if (!alert || typeof alert !== 'object') return false;
+  // Must have an id (string or number)
+  if (alert.id == null) return false;
+  // data must be an array of strings if present
+  if (alert.data != null) {
+    if (!Array.isArray(alert.data)) return false;
+    if (!alert.data.every(d => typeof d === 'string')) return false;
+  }
+  // title must be a string if present
+  if (alert.title != null && typeof alert.title !== 'string') return false;
+  // desc must be a string if present
+  if (alert.desc != null && typeof alert.desc !== 'string') return false;
+  // cat must be a string or number if present
+  if (alert.cat != null && typeof alert.cat !== 'string' && typeof alert.cat !== 'number') return false;
+  return true;
 }
 
 export default AlertPoller;

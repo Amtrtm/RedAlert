@@ -1,9 +1,12 @@
 import { readFileSync, existsSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
+import { createRequire } from 'module';
 import open from 'open';
 import { getConfig } from './configManager.js';
 import { log } from './logger.js';
+
+const require = createRequire(import.meta.url);
 
 // Resolve the real app directory (not the pkg snapshot)
 const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -41,13 +44,12 @@ export function createTray({ onStart, onStop }) {
   // Load icons at call time (inside try/catch from main.js), not at import time
   loadIcons();
 
-  // Load systray2 module
+  // Load systray2 module (synchronous require — systray2 is CommonJS)
   let SysTrayModule;
   try {
     SysTrayModule = require('systray2');
   } catch (e) {
     log.error('Failed to require systray2:', e.message);
-    log.error('Module paths:', JSON.stringify(require.resolve.paths?.('systray2') || 'N/A'));
     throw e;
   }
   SysTray = SysTrayModule.default || SysTrayModule;

@@ -38,8 +38,27 @@ export function getConfig() {
   return config;
 }
 
+// Only these keys can be set via the API
+const ALLOWED_KEYS = ['areas', 'pollInterval', 'alertActions', 'browserUrl', 'alertCooldown', 'autoStart'];
+
 export function updateConfig(updates) {
-  config = { ...config, ...updates };
+  for (const key of ALLOWED_KEYS) {
+    if (key in updates) {
+      if (key === 'alertActions') {
+        // Only allow known boolean sub-keys
+        const actions = updates.alertActions;
+        if (actions && typeof actions === 'object') {
+          config.alertActions = {
+            openBrowser: Boolean(actions.openBrowser),
+            notification: Boolean(actions.notification),
+            sound: Boolean(actions.sound)
+          };
+        }
+      } else {
+        config[key] = updates[key];
+      }
+    }
+  }
   saveConfig();
   return config;
 }

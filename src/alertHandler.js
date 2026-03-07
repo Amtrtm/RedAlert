@@ -1,11 +1,11 @@
 import { execFile } from 'child_process';
-import { existsSync } from 'fs';
 import { getConfig } from './configManager.js';
 import notifier from 'node-notifier';
 import open from 'open';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { log } from './logger.js';
+import { isWindows, isMac, getChromePath, getTrayIconExtension } from './platform.js';
 
 // Resolve the real app directory (not the pkg snapshot)
 const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -156,19 +156,26 @@ function findMatchingAreas(alert, configuredAreas) {
 }
 
 function showNotification(alert, matchedAreas) {
-  notifier.notify({
+  const iconExt = getTrayIconExtension();
+  const notifyOpts = {
     title: 'Red Alert!',
     message: `${alert.title || 'Alert'}\n${matchedAreas.join(', ')}\n${alert.desc || ''}`,
     sound: false,
     wait: true,
     timeout: 30,
-    appID: 'RedAlert.PikudHaoref.Monitor',
-    icon: join(appDir, 'assets', 'icon-alert.ico')
-  }, (err, response, metadata) => {
+    icon: join(appDir, 'assets', `icon-alert.${iconExt}`)
+  };
+
+  // Windows needs AppUserModelId for toast notifications
+  if (isWindows) {
+    notifyOpts.appID = 'RedAlert.PikudHaoref.Monitor';
+  }
+
+  notifier.notify(notifyOpts, (err, response, metadata) => {
     if (err) {
       console.error('Notification error:', err.message);
     }
-    if (metadata?.activationType === 'error' || response === 'error') {
+    if (isWindows && (metadata?.activationType === 'error' || response === 'error')) {
       console.error('Notification failed. Falling back to PowerShell toast.');
       showPowerShellToast(alert, matchedAreas);
     }
@@ -204,25 +211,32 @@ function showPowerShellToast(alert, matchedAreas) {
 
 function playAlertSound() {
   const soundPath = join(appDir, 'assets', 'alert.wav');
-  execFile('powershell.exe', [
-    '-NoProfile', '-Command',
-    `(New-Object Media.SoundPlayer '${soundPath.replace(/'/g, "''")}').PlaySync()`
-  ], (err) => {
-    if (err) console.error('Sound playback error:', err.message);
-  });
+
+  if (isWindows) {
+    execFile('powershell.exe', [
+      '-NoProfile', '-Command',
+      `(New-Object Media.SoundPlayer '${soundPath.replace(/'/g, "''")}').PlaySync()`
+    ], (err) => {
+      if (err) console.error('Sound playback error:', err.message);
+    });
+  } else if (isMac) {
+    execFile('afplay', [soundPath], (err) => {
+      if (err) console.error('Sound playback error:', err.message);
+    });
+  } else {
+    // Linux: try aplay (ALSA) or paplay (PulseAudio)
+    execFile('aplay', [soundPath], (err) => {
+      if (err) {
+        execFile('paplay', [soundPath], (err2) => {
+          if (err2) console.error('Sound playback error:', err2.message);
+        });
+      }
+    });
+  }
 }
 
 function openBrowser(url) {
-  // On Windows, 'open' needs the start command or the full exe path for Chrome
-  const chromePaths = [
-    join(process.env.LOCALAPPDATA || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-    join(process.env['PROGRAMFILES'] || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-    join(process.env['PROGRAMFILES(X86)'] || '', 'Google', 'Chrome', 'Application', 'chrome.exe'),
-  ];
-
-  const chromePath = chromePaths.find(p => {
-    try { return existsSync(p); } catch { return false; }
-  });
+  const chromePath = getChromePath();
 
   if (chromePath) {
     log.info('Opening Chrome:', url);

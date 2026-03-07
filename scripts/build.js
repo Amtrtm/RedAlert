@@ -1,11 +1,18 @@
 /**
- * Build script: bundles the app with esbuild, then compiles to .exe with pkg.
+ * Build script: bundles the app with esbuild, then compiles to native binary with pkg.
  *
- * Usage: node scripts/build.js
- * Output: dist/RedAlert.exe + dist/public/ + dist/assets/ + dist/config.json
+ * Usage:
+ *   node scripts/build.js              # Build for current platform
+ *   node scripts/build.js --win        # Build for Windows (x64)
+ *   node scripts/build.js --mac        # Build for macOS (arm64)
+ *   node scripts/build.js --mac-x64    # Build for macOS (Intel x64)
+ *   node scripts/build.js --linux      # Build for Linux (x64)
+ *   node scripts/build.js --all        # Build for all platforms
+ *
+ * Output: dist/<platform>/RedAlert[.exe] + dist/<platform>/public/ + assets/ + config.json
  */
 import { execFileSync } from 'child_process';
-import { mkdirSync, cpSync, existsSync, rmSync } from 'fs';
+import { mkdirSync, cpSync, existsSync, rmSync, chmodSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { build } from 'esbuild';
@@ -15,7 +22,34 @@ const ROOT = join(__dirname, '..');
 const DIST = join(ROOT, 'dist');
 const BUNDLE = join(DIST, 'bundle.cjs');
 
-console.log('=== RedAlert Build ===\n');
+// Parse platform flags
+const args = process.argv.slice(2);
+const currentPlatform = process.platform === 'darwin' ? 'mac' : process.platform === 'win32' ? 'win' : 'linux';
+
+const platforms = [];
+if (args.includes('--all')) {
+  platforms.push('win', 'mac', 'mac-x64', 'linux');
+} else {
+  if (args.includes('--win')) platforms.push('win');
+  if (args.includes('--mac')) platforms.push('mac');
+  if (args.includes('--mac-x64')) platforms.push('mac-x64');
+  if (args.includes('--linux')) platforms.push('linux');
+}
+if (platforms.length === 0) {
+  // Default: build for current platform
+  if (currentPlatform === 'mac') platforms.push('mac');
+  else if (currentPlatform === 'win') platforms.push('win');
+  else platforms.push('linux');
+}
+
+const PKG_TARGETS = {
+  'win': { target: 'node22-win-x64', output: 'RedAlert.exe', trayBin: 'tray_windows_release.exe' },
+  'mac': { target: 'node22-macos-arm64', output: 'RedAlert', trayBin: 'tray_darwin_release' },
+  'mac-x64': { target: 'node22-macos-x64', output: 'RedAlert', trayBin: 'tray_darwin_release' },
+  'linux': { target: 'node22-linux-x64', output: 'RedAlert', trayBin: 'tray_linux_release' },
+};
+
+console.log(`=== RedAlert Build (${platforms.join(', ')}) ===\n`);
 
 // Step 1: Clean & prepare dist
 console.log('1. Preparing dist directory...');
@@ -29,7 +63,6 @@ if (existsSync(DIST)) {
 mkdirSync(DIST, { recursive: true });
 
 // Step 2: Bundle ESM -> single CJS file with esbuild
-// Use banner to inject __dirname since import.meta is not available in CJS
 console.log('2. Bundling with esbuild...');
 await build({
   entryPoints: [join(ROOT, 'src', 'main.js')],
@@ -53,31 +86,75 @@ await build({
 });
 console.log('   Bundle created: dist/bundle.cjs');
 
-// Step 3: Copy static assets
-console.log('3. Copying static assets...');
-cpSync(join(ROOT, 'public'), join(DIST, 'public'), { recursive: true });
-cpSync(join(ROOT, 'assets'), join(DIST, 'assets'), { recursive: true });
-cpSync(join(ROOT, 'config.json'), join(DIST, 'config.json'));
+// Step 3-4: Build each platform
+for (const platform of platforms) {
+  const { target, output, trayBin } = PKG_TARGETS[platform];
+  const platformDir = platforms.length > 1 ? join(DIST, platform) : DIST;
 
-// Copy systray2 native module (needed at runtime)
-const systrayPath = join(ROOT, 'node_modules', 'systray2');
-if (existsSync(systrayPath)) {
-  cpSync(systrayPath, join(DIST, 'node_modules', 'systray2'), { recursive: true });
+  if (platforms.length > 1) {
+    mkdirSync(platformDir, { recursive: true });
+  }
+
+  console.log(`\n--- Building for ${platform} (${target}) ---`);
+
+  // Copy static assets
+  console.log(`3. Copying static assets for ${platform}...`);
+  cpSync(join(ROOT, 'public'), join(platformDir, 'public'), { recursive: true });
+  cpSync(join(ROOT, 'assets'), join(platformDir, 'assets'), { recursive: true });
+  cpSync(join(ROOT, 'config.json'), join(platformDir, 'config.json'));
+
+  // Copy bundle to platform dir if multi-platform build
+  if (platforms.length > 1) {
+    cpSync(BUNDLE, join(platformDir, 'bundle.cjs'));
+  }
+
+  // Copy systray2 native module (needed at runtime)
+  const systrayPath = join(ROOT, 'node_modules', 'systray2');
+  if (existsSync(systrayPath)) {
+    cpSync(systrayPath, join(platformDir, 'node_modules', 'systray2'), { recursive: true });
+    // Ensure tray binary is executable on macOS/Linux
+    if (platform !== 'win') {
+      const trayBinPath = join(platformDir, 'node_modules', 'systray2', 'traybin', trayBin);
+      if (existsSync(trayBinPath)) {
+        chmodSync(trayBinPath, 0o755);
+      }
+    }
+  }
+
+  // Compile with pkg
+  console.log(`4. Compiling with pkg (${target})...`);
+  const pkgBin = join(ROOT, 'node_modules', '@yao-pkg', 'pkg', 'lib-es5', 'bin.js');
+  const bundlePath = platforms.length > 1 ? join(platformDir, 'bundle.cjs') : BUNDLE;
+  execFileSync(process.execPath, [
+    pkgBin,
+    bundlePath,
+    '--targets', target,
+    '--output', join(platformDir, output),
+    '--compress', 'GZip',
+  ], { cwd: platformDir, stdio: 'inherit' });
+
+  // Clean up bundle copy in platform dir
+  if (platforms.length > 1 && existsSync(join(platformDir, 'bundle.cjs'))) {
+    rmSync(join(platformDir, 'bundle.cjs'), { force: true });
+  }
+
+  console.log(`   Built: ${platforms.length > 1 ? platform + '/' : ''}${output}`);
 }
 
-// Step 4: Compile with pkg
-// All arguments are hardcoded paths — no user input, safe to use
-console.log('4. Compiling with pkg...');
-const pkgBin = join(ROOT, 'node_modules', '@yao-pkg', 'pkg', 'lib-es5', 'bin.js');
-execFileSync(process.execPath, [
-  pkgBin,
-  BUNDLE,
-  '--targets', 'node22-win-x64',
-  '--output', join(DIST, 'RedAlert.exe'),
-  '--compress', 'GZip',
-], { cwd: DIST, stdio: 'inherit' });
+// Clean up root bundle if multi-platform
+if (platforms.length > 1 && existsSync(BUNDLE)) {
+  rmSync(BUNDLE, { force: true });
+}
 
 console.log('\n=== Build complete! ===');
-console.log('Output: dist/RedAlert.exe');
-console.log('Assets: dist/public/, dist/assets/, dist/config.json');
-console.log('\nTo create MSI installer, run: node scripts/build-msi.js');
+for (const platform of platforms) {
+  const { output } = PKG_TARGETS[platform];
+  const prefix = platforms.length > 1 ? `dist/${platform}` : 'dist';
+  console.log(`Output: ${prefix}/${output}`);
+}
+if (platforms.includes('win')) {
+  console.log('\nTo create MSI installer, run: node scripts/build-msi.js');
+}
+if (platforms.includes('mac') || platforms.includes('mac-x64')) {
+  console.log('To create DMG installer, run: node scripts/build-dmg.js');
+}

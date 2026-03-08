@@ -104,6 +104,11 @@ for (const platform of platforms) {
   cpSync(join(ROOT, 'data'), join(platformDir, 'data'), { recursive: true });
   cpSync(join(ROOT, 'config.json'), join(platformDir, 'config.json'));
 
+  // Copy VBS launcher for Windows (hides console window)
+  if (platform === 'win') {
+    cpSync(join(ROOT, 'launcher', 'RedAlert.vbs'), join(platformDir, 'RedAlert.vbs'));
+  }
+
   // Copy bundle to platform dir if multi-platform build
   if (platforms.length > 1) {
     cpSync(BUNDLE, join(platformDir, 'bundle.cjs'));

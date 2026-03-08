@@ -93,7 +93,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
     Id="*"
     Name="RedAlert"
     Language="1033"
-    Version="1.1.6"
+    Version="1.2.0"
     Manufacturer="RedAlert Project"
     UpgradeCode="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
 
@@ -133,6 +133,9 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
       <Component Id="ConfigFile" Guid="c3d4e5f6-a7b8-9012-cdef-123456789012">
         <File Id="ConfigJson" Source="$(var.DistDir)\\config.json" KeyPath="yes" />
       </Component>
+      <Component Id="VbsLauncher" Guid="f6a7b8c9-d0e1-2345-abcd-456789012345">
+        <File Id="RedAlertVbs" Source="$(var.DistDir)\\RedAlert.vbs" KeyPath="yes" />
+      </Component>
     </DirectoryRef>
 
     <DirectoryRef Id="AppMenuFolder">
@@ -140,7 +143,8 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
         <Shortcut Id="AppShortcut"
           Name="RedAlert"
           Description="Pikud HaOref Siren Monitor"
-          Target="[INSTALLFOLDER]RedAlert.exe"
+          Target="[SystemFolder]wscript.exe"
+          Arguments="&quot;[INSTALLFOLDER]RedAlert.vbs&quot;"
           WorkingDirectory="INSTALLFOLDER"
           Icon="RedAlertIcon" />
         <RemoveFolder Id="CleanAppMenu" On="uninstall" />
@@ -152,7 +156,8 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
       <Component Id="StartupShortcut" Guid="e5f6a7b8-c9d0-1234-efab-345678901234">
         <Shortcut Id="StartupLink"
           Name="RedAlert"
-          Target="[INSTALLFOLDER]RedAlert.exe"
+          Target="[SystemFolder]wscript.exe"
+          Arguments="&quot;[INSTALLFOLDER]RedAlert.vbs&quot;"
           WorkingDirectory="INSTALLFOLDER"
           Icon="RedAlertIcon" />
         <RegistryValue Root="HKCU" Key="Software\\RedAlert" Name="autostart" Type="integer" Value="1" KeyPath="yes" />
@@ -162,6 +167,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
     <Feature Id="MainFeature" Title="RedAlert" Level="1">
       <ComponentRef Id="MainExe" />
       <ComponentRef Id="ConfigFile" />
+      <ComponentRef Id="VbsLauncher" />
       <ComponentRef Id="StartMenuShortcut" />
       <ComponentGroupRef Id="PublicFiles" />
       <ComponentGroupRef Id="AssetFiles" />
@@ -173,8 +179,8 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
       <ComponentRef Id="StartupShortcut" />
     </Feature>
 
-    <!-- Launch app after install -->
-    <CustomAction Id="LaunchApp" FileKey="RedAlertExe" ExeCommand="" Return="asyncNoWait" />
+    <!-- Launch app after install (via VBS to hide console window) -->
+    <CustomAction Id="LaunchApp" Directory="INSTALLFOLDER" ExeCommand="[SystemFolder]wscript.exe RedAlert.vbs" Return="asyncNoWait" />
     <InstallExecuteSequence>
       <Custom Action="LaunchApp" After="InstallFinalize">NOT Installed OR REINSTALL</Custom>
     </InstallExecuteSequence>

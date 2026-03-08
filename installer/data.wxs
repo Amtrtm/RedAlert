@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+    <Fragment>
+        <DirectoryRef Id="DataFolder">
+            <Component Id="cmp90F1624156D94DB94CD89CB1B0F21961" Guid="*">
+                <File Id="filC6D5AFE09C2D9241F2ACC4A6A5132D18" KeyPath="yes" Source="$(var.DataDir)\false_alerts.json" />
+            </Component>
+            <Component Id="cmp4D57160C9BBE662C10416F8DAFE49B1D" Guid="*">
+                <File Id="fil52DE1CDBE19A6970591179F28164901F" KeyPath="yes" Source="$(var.DataDir)\iran_alerts.json" />
+            </Component>
+            <Component Id="cmp87ED437732A26535BD11F93FF7C3BC07" Guid="*">
+                <File Id="fil8DFA7BF9BEF767262B9D9EF98C525856" KeyPath="yes" Source="$(var.DataDir)\yemen_alerts.json" />
+            </Component>
+        </DirectoryRef>
+    </Fragment>
+    <Fragment>
+        <ComponentGroup Id="DataFiles">
+            <ComponentRef Id="cmp90F1624156D94DB94CD89CB1B0F21961" />
+            <ComponentRef Id="cmp4D57160C9BBE662C10416F8DAFE49B1D" />
+            <ComponentRef Id="cmp87ED437732A26535BD11F93FF7C3BC07" />
+        </ComponentGroup>
+    </Fragment>
+</Wix>

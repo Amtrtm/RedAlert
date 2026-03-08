@@ -17,9 +17,19 @@
     <MajorUpgrade DowngradeErrorMessage="A newer version of RedAlert is already installed." />
     <MediaTemplate EmbedCab="yes" />
 
+    <Icon Id="RedAlertIcon" SourceFile="$(var.DistDir)\assets\icon.ico" />
+    <Property Id="ARPPRODUCTICON" Value="RedAlertIcon" />
+
     <Directory Id="TARGETDIR" Name="SourceDir">
       <Directory Id="LocalAppDataFolder">
-        <Directory Id="INSTALLFOLDER" Name="RedAlert" />
+        <Directory Id="INSTALLFOLDER" Name="RedAlert">
+          <Directory Id="PublicFolder" Name="public" />
+          <Directory Id="AssetsFolder" Name="assets" />
+          <Directory Id="DataFolder" Name="data" />
+          <Directory Id="NodeModulesFolder" Name="node_modules">
+            <Directory Id="Systray2Folder" Name="systray2" />
+          </Directory>
+        </Directory>
       </Directory>
       <Directory Id="ProgramMenuFolder">
         <Directory Id="AppMenuFolder" Name="RedAlert" />
@@ -34,6 +44,9 @@
       <Component Id="ConfigFile" Guid="c3d4e5f6-a7b8-9012-cdef-123456789012">
         <File Id="ConfigJson" Source="$(var.DistDir)\config.json" KeyPath="yes" />
       </Component>
+      <Component Id="VbsLauncher" Guid="f6a7b8c9-d0e1-2345-abcd-456789012345">
+        <File Id="RedAlertVbs" Source="$(var.DistDir)\RedAlert.vbs" KeyPath="yes" />
+      </Component>
     </DirectoryRef>
 
     <DirectoryRef Id="AppMenuFolder">
@@ -41,8 +54,10 @@
         <Shortcut Id="AppShortcut"
           Name="RedAlert"
           Description="Pikud HaOref Siren Monitor"
-          Target="[INSTALLFOLDER]RedAlert.exe"
-          WorkingDirectory="INSTALLFOLDER" />
+          Target="[SystemFolder]wscript.exe"
+          Arguments="&quot;[INSTALLFOLDER]RedAlert.vbs&quot;"
+          WorkingDirectory="INSTALLFOLDER"
+          Icon="RedAlertIcon" />
         <RemoveFolder Id="CleanAppMenu" On="uninstall" />
         <RegistryValue Root="HKCU" Key="Software\RedAlert" Name="installed" Type="integer" Value="1" KeyPath="yes" />
       </Component>
@@ -52,8 +67,10 @@
       <Component Id="StartupShortcut" Guid="e5f6a7b8-c9d0-1234-efab-345678901234">
         <Shortcut Id="StartupLink"
           Name="RedAlert"
-          Target="[INSTALLFOLDER]RedAlert.exe"
-          WorkingDirectory="INSTALLFOLDER" />
+          Target="[SystemFolder]wscript.exe"
+          Arguments="&quot;[INSTALLFOLDER]RedAlert.vbs&quot;"
+          WorkingDirectory="INSTALLFOLDER"
+          Icon="RedAlertIcon" />
         <RegistryValue Root="HKCU" Key="Software\RedAlert" Name="autostart" Type="integer" Value="1" KeyPath="yes" />
       </Component>
     </DirectoryRef>
@@ -61,9 +78,11 @@
     <Feature Id="MainFeature" Title="RedAlert" Level="1">
       <ComponentRef Id="MainExe" />
       <ComponentRef Id="ConfigFile" />
+      <ComponentRef Id="VbsLauncher" />
       <ComponentRef Id="StartMenuShortcut" />
       <ComponentGroupRef Id="PublicFiles" />
       <ComponentGroupRef Id="AssetFiles" />
+      <ComponentGroupRef Id="DataFiles" />
       <ComponentGroupRef Id="Systray2Files" />
     </Feature>
 
@@ -71,8 +90,8 @@
       <ComponentRef Id="StartupShortcut" />
     </Feature>
 
-    <!-- Launch app after install -->
-    <CustomAction Id="LaunchApp" FileKey="RedAlertExe" ExeCommand="" Return="asyncNoWait" />
+    <!-- Launch app after install (via VBS to hide console window) -->
+    <CustomAction Id="LaunchApp" Directory="INSTALLFOLDER" ExeCommand="[SystemFolder]wscript.exe RedAlert.vbs" Return="asyncNoWait" />
     <InstallExecuteSequence>
       <Custom Action="LaunchApp" After="InstallFinalize">NOT Installed OR REINSTALL</Custom>
     </InstallExecuteSequence>

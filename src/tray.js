@@ -47,9 +47,12 @@ export function createTray({ onStart, onStop }) {
   loadIcons();
 
   // Load systray2 module (synchronous require — systray2 is CommonJS)
+  // In pkg builds, bare 'systray2' resolves to the virtual snapshot, not the real
+  // node_modules/ next to the exe. Use an absolute path so it finds the real module.
+  const systray2Main = join(appDir, 'node_modules', 'systray2', 'index.js');
   let SysTrayModule;
   try {
-    SysTrayModule = require('systray2');
+    SysTrayModule = existsSync(systray2Main) ? require(systray2Main) : require('systray2');
   } catch (e) {
     log.error('Failed to require systray2:', e.message);
     throw e;

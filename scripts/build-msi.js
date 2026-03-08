@@ -4,10 +4,10 @@
  *
  * Prerequisites: run `node scripts/build.js` first
  * Usage: node scripts/build-msi.js
- * Output: dist/RedAlert-1.1.0.msi
+ * Output: dist/RedAlert-<version>.msi
  */
 import { execFileSync } from 'child_process';
-import { existsSync, writeFileSync, mkdirSync } from 'fs';
+import { existsSync, writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 
@@ -16,7 +16,8 @@ const ROOT = join(__dirname, '..');
 const DIST = join(ROOT, 'dist');
 const WIX_BIN = join(ROOT, 'node_modules', 'wix-msi', 'wix_bin');
 const INSTALLER_DIR = join(ROOT, 'installer');
-const MSI_OUTPUT = join(DIST, 'RedAlert-1.1.0.msi');
+const { version } = JSON.parse(readFileSync(join(ROOT, 'package.json'), 'utf8'));
+const MSI_OUTPUT = join(DIST, `RedAlert-${version}.msi`);
 
 // Verify prerequisites
 if (!existsSync(join(DIST, 'RedAlert.exe'))) {

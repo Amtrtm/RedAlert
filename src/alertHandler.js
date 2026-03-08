@@ -200,7 +200,7 @@ function showPowerShellToast(alert, matchedAreas) {
     `[Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null;
      [Windows.Data.Xml.Dom.XmlDocument, Windows.Data.Xml.Dom, ContentType = WindowsRuntime] | Out-Null;
      $xml = New-Object Windows.Data.Xml.Dom.XmlDocument;
-     $xml.LoadXml('<toast><visual><binding template="ToastGeneric"><text>Red Alert!</text><text>${title} - ${areas}</text></binding></visual></toast>');
+     $xml.LoadXml('<toast><visual><binding template="ToastGeneric"><text>Red Alert!</text><text>${title} - ${areas}</text></binding></visual><audio silent="true"/></toast>');
      $toast = [Windows.UI.Notifications.ToastNotification]::new($xml);
      [Windows.UI.Notifications.ToastNotificationManager]::CreateToastNotifier('RedAlert.PikudHaoref.Monitor').Show($toast);`
   ], (err) => {

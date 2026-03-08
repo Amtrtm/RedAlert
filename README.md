@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/icon.png" alt="RedAlert Icon" width="128" height="128">
+  <img src="Icon_New.png" alt="RedAlert Icon" width="128" height="128">
 </p>
 
 <h1 align="center">RedAlert</h1>

@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500&family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="neon-dashboard.css">
+</head>
+<body>
+
+<div class="nd-layout">
+
+  <!-- ========== LEFT NAV ========== -->
+  <nav class="nd-nav">
+    <div>
+      <div class="nd-brand">
+        <span class="nd-brand__icon"></span>
+        My Dashboard
+      </div>
+      <div class="nd-nav-menu">
+        <a class="nd-nav-item nd-nav-item--active" data-view="overview">Overview</a>
+        <a class="nd-nav-item" data-view="details">
+          Details
+          <span class="nd-nav-badge">3</span>
+        </a>
+        <a class="nd-nav-item" data-view="settings">Settings</a>
+        <div class="nd-nav-separator"></div>
+        <a class="nd-nav-item" data-view="trends">Trends</a>
+      </div>
+    </div>
+    <div class="nd-nav-footer">
+      workspace: <i style="color: var(--c-accent-cyan);">my-project</i>
+    </div>
+  </nav>
+
+  <!-- ========== MAIN CONTENT ========== -->
+  <main class="nd-main">
+
+    <!-- View: Overview -->
+    <div class="nd-view nd-view--active" id="view-overview">
+
+      <!-- Header -->
+      <div>
+        <div class="nd-label">Dashboard</div>
+        <h1 class="nd-title">Overview</h1>
+        <p class="nd-subtitle">Health score, metrics, and key findings.</p>
+      </div>
+
+      <!-- Score Card -->
+      <div class="nd-card nd-card--wide">
+        <div class="nd-card__header">
+          <span class="nd-card__title">Health Score</span>
+        </div>
+        <div style="text-align: center; padding: 24px 0;">
+          <div class="nd-metric-xl nd-text-cyan">92</div>
+          <div class="nd-label" style="margin-top: 8px;">out of 100</div>
+        </div>
+      </div>
+
+      <!-- Metric Cards (2-col grid) -->
+      <div class="nd-grid">
+        <div class="nd-card">
+          <div class="nd-card__title">Active Users</div>
+          <div class="nd-metric-md" style="margin-top: 8px;">1.2K</div>
+          <div class="nd-label" style="margin-top: 4px;">Last 24 hours</div>
+        </div>
+        <div class="nd-card">
+          <div class="nd-card__title">Response Time</div>
+          <div class="nd-metric-md nd-text-cyan" style="margin-top: 8px;">~42ms</div>
+          <div class="nd-label" style="margin-top: 4px;">P95 Latency</div>
+        </div>
+      </div>
+
+      <!-- Bar Chart Card -->
+      <div class="nd-card">
+        <div class="nd-card__header">
+          <span class="nd-card__title">Resource Usage</span>
+          <span class="nd-label">by component</span>
+        </div>
+        <div class="nd-bars">
+          <div class="nd-bar-row">
+            <span class="nd-bar-label">API</span>
+            <div class="nd-bar-track"><div class="nd-bar-fill" style="width: 72%;"></div></div>
+            <span class="nd-bar-value">72%</span>
+          </div>
+          <div class="nd-bar-row">
+            <span class="nd-bar-label">Database</span>
+            <div class="nd-bar-track"><div class="nd-bar-fill" style="width: 45%;"></div></div>
+            <span class="nd-bar-value">45%</span>
+          </div>
+          <div class="nd-bar-row">
+            <span class="nd-bar-label">Cache</span>
+            <div class="nd-bar-track"><div class="nd-bar-fill" style="width: 18%;"></div></div>
+            <span class="nd-bar-value">18%</span>
+          </div>
+          <div class="nd-bar-row">
+            <span class="nd-bar-label">Static</span>
+            <div class="nd-bar-track"><div class="nd-bar-fill nd-bar-fill--muted" style="width: 8%;"></div></div>
+            <span class="nd-bar-value">8%</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Issues / Callouts -->
+      <div class="nd-card">
+        <div class="nd-card__header">
+          <span class="nd-card__title">Issues Detected</span>
+          <span class="nd-label">2 found</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+          <div class="nd-callout--warning nd-callout">
+            <strong style="color: var(--c-warning);">High Memory Usage</strong><br>
+            Server node-03 at 89% memory.<br>
+            <strong>Fix:</strong> Scale horizontally or increase instance size.<br>
+            <span class="nd-text-dim">Savings: ~$200/mo with right-sizing</span>
+          </div>
+          <div class="nd-callout">
+            No SSL Certificate Rotation<br>
+            Cert expires in 14 days.<br>
+            <strong>Fix:</strong> Enable auto-rotation via certbot.
+          </div>
+        </div>
+      </div>
+
+      <!-- Stat Row (3-col) -->
+      <div class="nd-stat-row">
+        <div class="nd-card">
+          <div class="nd-metric-md">847</div>
+          <div class="nd-label">Requests/sec</div>
+        </div>
+        <div class="nd-card">
+          <div class="nd-metric-md nd-text-cyan">99.9%</div>
+          <div class="nd-label">Uptime</div>
+        </div>
+        <div class="nd-card">
+          <div class="nd-metric-md">3</div>
+          <div class="nd-label">Active Alerts</div>
+        </div>
+      </div>
+
+      <!-- Trajectory / Sparkline -->
+      <div class="nd-card">
+        <div class="nd-card__title">Request Volume (7d)</div>
+        <div class="nd-trajectory" style="margin-top: 16px;">
+          <div class="nd-trajectory__bar" style="height: 40%;"></div>
+          <div class="nd-trajectory__bar" style="height: 55%;"></div>
+          <div class="nd-trajectory__bar" style="height: 35%;"></div>
+          <div class="nd-trajectory__bar" style="height: 60%;"></div>
+          <div class="nd-trajectory__bar" style="height: 75%;"></div>
+          <div class="nd-trajectory__bar" style="height: 50%;"></div>
+          <div class="nd-trajectory__bar" style="height: 85%;"></div>
+        </div>
+      </div>
+
+      <!-- Expandable Component Cards -->
+      <div class="nd-card">
+        <div class="nd-card__header">
+          <span class="nd-card__title">Services</span>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div class="nd-expandable" onclick="this.classList.toggle('nd-expandable--open'); let b=this.querySelector('.nd-expandable__body'); b.style.maxHeight = b.style.maxHeight ? '' : b.scrollHeight+'px';">
+            <div class="nd-expandable__header">
+              <span class="nd-expandable__title">Auth Service</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="nd-text-cyan" style="font-family: var(--font-mono); font-size: 16px;">healthy</span>
+                <span class="nd-expandable__chevron">&#9660;</span>
+              </div>
+            </div>
+            <div class="nd-expandable__body">
+              <div class="nd-expandable__body-inner">
+                <div class="nd-label">Details</div>
+                <p class="nd-text-dim" style="font-family: var(--font-mono); line-height: 1.6; margin-top: 4px;">
+                  Last deploy: 2 hours ago<br>
+                  Instances: 3 running<br>
+                  Error rate: 0.02%
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="nd-expandable" onclick="this.classList.toggle('nd-expandable--open'); let b=this.querySelector('.nd-expandable__body'); b.style.maxHeight = b.style.maxHeight ? '' : b.scrollHeight+'px';">
+            <div class="nd-expandable__header">
+              <span class="nd-expandable__title">Payment Gateway</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="nd-badge--warning nd-badge">degraded</span>
+                <span class="nd-expandable__chevron">&#9660;</span>
+              </div>
+            </div>
+            <div class="nd-expandable__body">
+              <div class="nd-expandable__body-inner">
+                <div class="nd-label">Details</div>
+                <p class="nd-text-dim" style="font-family: var(--font-mono); line-height: 1.6; margin-top: 4px;">
+                  Latency spike detected at 14:32 UTC.<br>
+                  Upstream provider reporting intermittent issues.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model Mix Bar -->
+      <div class="nd-card">
+        <div class="nd-card__title">Traffic Distribution</div>
+        <div class="nd-model-bar" style="margin-top: 16px;">
+          <div class="nd-model-segment nd-model-segment--opus" style="width: 45%;"></div>
+          <div class="nd-model-segment nd-model-segment--sonnet" style="width: 30%;"></div>
+          <div class="nd-model-segment nd-model-segment--haiku" style="width: 20%;"></div>
+          <div class="nd-model-segment nd-model-segment--other" style="width: 5%;"></div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 24px; margin-top: 8px; font-size: 13px; font-family: var(--font-mono); color: var(--c-text-dim);">
+          <span><span style="display:inline-block;width:10px;height:10px;background:#a78bfa;border-radius:2px;margin-right:6px;"></span>US East 45%</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:var(--c-accent-cyan);border-radius:2px;margin-right:6px;"></span>EU West 30%</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:#34d399;border-radius:2px;margin-right:6px;"></span>APAC 20%</span>
+          <span><span style="display:inline-block;width:10px;height:10px;background:#94a3b8;border-radius:2px;margin-right:6px;"></span>Other 5%</span>
+        </div>
+      </div>
+
+      <!-- Tags -->
+      <div class="nd-card">
+        <div class="nd-card__title">Quick Filters</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px;">
+          <span class="nd-tag">production</span>
+          <span class="nd-tag">staging</span>
+          <span class="nd-tag">api-v2</span>
+          <span class="nd-tag">workers</span>
+          <span class="nd-tag">cron-jobs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- View: Settings (toggle demo) -->
+    <div class="nd-view" id="view-settings">
+      <div>
+        <div class="nd-label">Configuration</div>
+        <h1 class="nd-title">Settings</h1>
+      </div>
+      <div class="nd-card">
+        <div class="nd-setting">
+          <div class="nd-setting__info">
+            <div class="nd-setting__title">Auto-scaling</div>
+            <div class="nd-setting__desc">Automatically scale instances based on load</div>
+          </div>
+          <label class="nd-toggle">
+            <input type="checkbox" checked>
+            <span class="nd-toggle__slider"></span>
+          </label>
+        </div>
+        <div class="nd-setting">
+          <div class="nd-setting__info">
+            <div class="nd-setting__title">Debug Logging</div>
+            <div class="nd-setting__desc">Enable verbose logging for troubleshooting</div>
+          </div>
+          <label class="nd-toggle">
+            <input type="checkbox">
+            <span class="nd-toggle__slider"></span>
+          </label>
+        </div>
+        <div class="nd-setting">
+          <div class="nd-setting__info">
+            <div class="nd-setting__title">Notifications</div>
+            <div class="nd-setting__desc">Send alerts to Slack on critical events</div>
+          </div>
+          <label class="nd-toggle">
+            <input type="checkbox" checked>
+            <span class="nd-toggle__slider"></span>
+          </label>
+        </div>
+      </div>
+      <div style="display: flex; gap: 12px;">
+        <button class="nd-btn">Save Changes</button>
+        <button class="nd-btn" disabled>Reset to Defaults</button>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ========== RIGHT PANEL ========== -->
+  <aside class="nd-panel">
+    <div class="nd-section-title">Summary</div>
+    <div style="font-family: var(--font-mono); font-size: 16px; color: var(--c-text-dim);">
+      <span class="nd-text-cyan">4</span> services &middot; <span class="nd-text-cyan">2</span> alerts
+    </div>
+
+    <div class="nd-section-title">Quick Actions</div>
+    <button class="nd-btn" style="width: 100%;">Deploy Latest</button>
+    <button class="nd-btn" style="width: 100%;">Run Health Check</button>
+
+    <div class="nd-section-title">Notes</div>
+    <textarea class="nd-input" rows="3" placeholder="Add notes..."></textarea>
+
+    <!-- Table demo -->
+    <div class="nd-section-title">Recent Events</div>
+    <table class="nd-table">
+      <thead>
+        <tr><th>Time</th><th>Event</th><th>Status</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>14:32</td><td>Deploy</td><td><span class="nd-badge">ok</span></td></tr>
+        <tr><td>13:15</td><td>Scale up</td><td><span class="nd-badge">ok</span></td></tr>
+        <tr><td>12:01</td><td>Alert</td><td><span class="nd-badge nd-badge--warning">warn</span></td></tr>
+      </tbody>
+    </table>
+  </aside>
+
+</div>
+
+<script>
+// Simple view switching
+document.querySelectorAll('.nd-nav-item[data-view]').forEach(item => {
+  item.addEventListener('click', () => {
+    document.querySelectorAll('.nd-nav-item').forEach(n => n.classList.remove('nd-nav-item--active'));
+    item.classList.add('nd-nav-item--active');
+    const viewId = item.dataset.view;
+    document.querySelectorAll('.nd-view').forEach(v => v.classList.remove('nd-view--active'));
+    const target = document.getElementById('view-' + viewId);
+    if (target) target.classList.add('nd-view--active');
+  });
+});
+</script>
+
+</body>
+</html>

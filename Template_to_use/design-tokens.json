@@ -1,0 +1,208 @@
+{
+  "meta": {
+    "name": "Neon Dashboard Design System",
+    "description": "Dark cyberpunk dashboard theme extracted from Token Optimizer",
+    "version": "1.0.0"
+  },
+  "colors": {
+    "background": {
+      "base": "#0a0b10",
+      "surface": "#13151a",
+      "surfaceHover": "#1c1f26",
+      "surfaceOverlay": "rgba(10,11,16,0.8)",
+      "gradient": "radial-gradient(circle at 50% 0%, #1a253a 0%, #0a0b10 60%)"
+    },
+    "accent": {
+      "cyan": "#00f0ff",
+      "blue": "#0066ff",
+      "glowCyan": "rgba(0, 240, 255, 0.4)",
+      "glowCyanText": "rgba(0, 240, 255, 0.6)",
+      "success": "#10b981"
+    },
+    "text": {
+      "primary": "#ffffff",
+      "dim": "#7d8ca3"
+    },
+    "border": {
+      "default": "rgba(255, 255, 255, 0.08)",
+      "hoverCyan": "rgba(0, 240, 255, 0.3)",
+      "subtleCyan": "rgba(0, 240, 255, 0.2)"
+    },
+    "semantic": {
+      "warning": "#fb923c",
+      "warningBg": "rgba(251,146,60,0.1)",
+      "caution": "#fbbf24",
+      "cautionBg": "rgba(251,191,36,0.1)",
+      "danger": "#f87171",
+      "dangerBg": "rgba(248,113,113,0.1)",
+      "success": "#10b981",
+      "successBg": "rgba(16,185,129,0.3)"
+    },
+    "modelColors": {
+      "opus": { "gradient": "linear-gradient(90deg, #a78bfa, #7c3aed)", "dot": "#a78bfa" },
+      "sonnet": { "gradient": "linear-gradient(90deg, #00f0ff, #0099cc)", "dot": "#00f0ff" },
+      "haiku": { "gradient": "linear-gradient(90deg, #34d399, #059669)", "dot": "#34d399" },
+      "other": { "gradient": "linear-gradient(90deg, #94a3b8, #64748b)", "dot": "#94a3b8" }
+    }
+  },
+  "typography": {
+    "fonts": {
+      "sans": { "family": "Space Grotesk", "googleUrl": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" },
+      "mono": { "family": "JetBrains Mono", "googleUrl": "https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;500&display=swap" }
+    },
+    "roles": {
+      "pageTitle": { "font": "sans", "weight": 300, "size": "48px", "lineHeight": 1, "letterSpacing": "-0.02em", "gradient": "linear-gradient(180deg, #fff, #aaa)" },
+      "sectionTitle": { "font": "sans", "weight": 600, "size": "18px", "letterSpacing": "0.05em" },
+      "brand": { "font": "sans", "weight": 700, "size": "24px", "letterSpacing": "-0.02em" },
+      "navItem": { "font": "sans", "weight": 400, "size": "13px", "letterSpacing": "0.1em", "textTransform": "uppercase" },
+      "label": { "font": "mono", "weight": 500, "size": "12px", "letterSpacing": "0.15em", "textTransform": "uppercase" },
+      "metricLarge": { "font": "mono", "weight": 300, "size": "64px", "lineHeight": 0.9 },
+      "metricMedium": { "font": "mono", "weight": 300, "size": "36px" },
+      "metricSmall": { "font": "mono", "weight": 300, "size": "32px" },
+      "body": { "font": "sans", "weight": 300, "size": "16px", "lineHeight": 1.4 },
+      "bodyMono": { "font": "mono", "weight": 300, "size": "16px", "lineHeight": 1.6 },
+      "caption": { "font": "mono", "weight": 500, "size": "11px", "letterSpacing": "0.1em", "textTransform": "uppercase" },
+      "badge": { "font": "mono", "weight": 400, "size": "11px", "letterSpacing": "0.1em", "textTransform": "uppercase" }
+    }
+  },
+  "spacing": {
+    "s1": "4px",
+    "s2": "8px",
+    "s3": "16px",
+    "s4": "24px",
+    "s5": "32px",
+    "s6": "64px"
+  },
+  "layout": {
+    "threeColumn": {
+      "gridTemplate": "260px 1fr 340px",
+      "maxWidth": "1800px",
+      "description": "Left nav | Main content (scrollable) | Right panel (config/summary)"
+    },
+    "twoColumn": {
+      "gridTemplate": "260px 1fr",
+      "description": "Left nav | Full-width main (used when right panel hidden)"
+    },
+    "dashboardGrid": {
+      "columns": "repeat(2, 1fr)",
+      "gap": "24px",
+      "description": "2-column card grid within main content area"
+    },
+    "statRow": {
+      "columns": "repeat(3, 1fr)",
+      "gap": "16px",
+      "description": "3-column stat cards row"
+    }
+  },
+  "effects": {
+    "glows": {
+      "small": "0 0 10px rgba(0, 240, 255, 0.4)",
+      "text": "0 0 8px rgba(0, 240, 255, 0.6)",
+      "large": "0 0 20px rgba(255,255,255,0.2)",
+      "button": "0 0 10px rgba(0,240,255,0.2)"
+    },
+    "shadows": {
+      "card": "0 4px 20px rgba(0,0,0,0.3)"
+    },
+    "gridOverlay": {
+      "description": "Subtle grid lines on background via ::before pseudo-element",
+      "lineColor": "rgba(255,255,255,0.03)",
+      "size": "40px"
+    },
+    "transitions": {
+      "default": "all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)",
+      "fast": "0.2s",
+      "expand": "0.35s cubic-bezier(0.4, 0, 0.2, 1)"
+    }
+  },
+  "components": {
+    "card": {
+      "background": "#13151a",
+      "border": "1px solid rgba(255, 255, 255, 0.08)",
+      "borderRadius": "12px",
+      "padding": "24px",
+      "shadow": "0 4px 20px rgba(0,0,0,0.3)",
+      "topAccent": "linear-gradient(90deg, transparent, #00f0ff, transparent) at opacity 0.5",
+      "hoverBorder": "rgba(0,240,255,0.3)"
+    },
+    "navItem": {
+      "padding": "12px 8px",
+      "borderLeft": "2px solid transparent",
+      "activeGradient": "linear-gradient(90deg, rgba(0,240,255,0.05), transparent)",
+      "activeBorderColor": "#00f0ff",
+      "inactiveOpacity": 0.6,
+      "activeOpacity": 1
+    },
+    "badge": {
+      "border": "1px solid #00f0ff",
+      "color": "#00f0ff",
+      "background": "rgba(0,240,255,0.1)",
+      "padding": "2px 6px",
+      "borderRadius": "4px"
+    },
+    "flagBadge": {
+      "borderRadius": "3px",
+      "padding": "2px 6px",
+      "variants": {
+        "warning": { "color": "#fb923c", "border": "#fb923c", "bg": "rgba(251,146,60,0.1)" },
+        "caution": { "color": "#fbbf24", "border": "#fbbf24", "bg": "rgba(251,191,36,0.1)" },
+        "danger": { "color": "#f87171", "border": "#f87171", "bg": "rgba(248,113,113,0.1)" }
+      }
+    },
+    "toggle": {
+      "width": "36px",
+      "height": "20px",
+      "trackBg": "rgba(255,255,255,0.1)",
+      "thumbSize": "14px",
+      "thumbColor": "#7d8ca3",
+      "activeTrackBg": "rgba(0,240,255,0.15)",
+      "activeThumbColor": "#00f0ff",
+      "activeBorder": "#00f0ff"
+    },
+    "button": {
+      "border": "1px solid #7d8ca3",
+      "color": "#7d8ca3",
+      "padding": "12px 14px",
+      "borderRadius": "4px",
+      "hoverBorder": "#00f0ff",
+      "hoverColor": "#00f0ff"
+    },
+    "input": {
+      "background": "#13151a",
+      "border": "1px solid rgba(255, 255, 255, 0.08)",
+      "borderRadius": "8px",
+      "focusBorder": "#00f0ff",
+      "color": "#ffffff",
+      "placeholderColor": "#7d8ca3"
+    },
+    "barChart": {
+      "trackHeight": "16px",
+      "trackBg": "rgba(255,255,255,0.04)",
+      "fillGradient": "linear-gradient(90deg, #00f0ff, rgba(0,255,255,0.1))",
+      "fillOpacity": 0.6,
+      "fixedFillGradient": "linear-gradient(90deg, rgba(255,255,255,0.2), rgba(255,255,255,0.05))",
+      "labelWidth": "100px"
+    },
+    "callout": {
+      "borderLeft": "3px solid #00f0ff",
+      "borderRadius": "8px",
+      "background": "#13151a",
+      "padding": "16px 24px"
+    },
+    "scrollbar": {
+      "width": "6px",
+      "trackBg": "#0a0b10",
+      "thumbBg": "#333",
+      "thumbHoverBg": "#555",
+      "thumbRadius": "3px"
+    }
+  },
+  "patterns": {
+    "gradientTitle": "Use linear-gradient(180deg, #fff, #aaa) with -webkit-background-clip: text for hero titles",
+    "glowOnHover": "Add border-color transition to cyan + text-shadow glow on interactive elements",
+    "topAccentLine": "Cards use a ::before pseudo with horizontal cyan gradient at top edge",
+    "expandCollapse": "Use max-height: 0 -> auto with cubic-bezier(0.4, 0, 0.2, 1) transition + chevron rotation",
+    "navActiveIndicator": "Left border turns cyan + background gradient fade from left",
+    "gridBackground": "Fixed ::before pseudo on body with 40px grid lines at 3% white opacity"
+  }
+}

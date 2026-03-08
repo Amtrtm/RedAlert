@@ -114,16 +114,22 @@ for (const platform of platforms) {
     cpSync(BUNDLE, join(platformDir, 'bundle.cjs'));
   }
 
-  // Copy systray2 native module (needed at runtime)
-  const systrayPath = join(ROOT, 'node_modules', 'systray2');
-  if (existsSync(systrayPath)) {
-    cpSync(systrayPath, join(platformDir, 'node_modules', 'systray2'), { recursive: true });
-    // Ensure tray binary is executable on macOS/Linux
-    if (platform !== 'win') {
-      const trayBinPath = join(platformDir, 'node_modules', 'systray2', 'traybin', trayBin);
-      if (existsSync(trayBinPath)) {
-        chmodSync(trayBinPath, 0o755);
-      }
+  // Copy systray2 native module and its dependencies (needed at runtime)
+  // systray2 is externalized from the bundle, so it and its entire dep tree
+  // must exist on disk next to the exe: systray2 -> fs-extra, debug
+  // fs-extra -> graceful-fs, jsonfile, universalify; debug -> ms
+  const systray2Deps = ['systray2', 'fs-extra', 'graceful-fs', 'jsonfile', 'universalify', 'debug', 'ms'];
+  for (const dep of systray2Deps) {
+    const depPath = join(ROOT, 'node_modules', dep);
+    if (existsSync(depPath)) {
+      cpSync(depPath, join(platformDir, 'node_modules', dep), { recursive: true });
+    }
+  }
+  // Ensure tray binary is executable on macOS/Linux
+  if (platform !== 'win') {
+    const trayBinPath = join(platformDir, 'node_modules', 'systray2', 'traybin', trayBin);
+    if (existsSync(trayBinPath)) {
+      chmodSync(trayBinPath, 0o755);
     }
   }
 

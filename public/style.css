@@ -493,6 +493,184 @@ body::before {
   transform: translateX(-50%) translateY(0);
 }
 
+/* ========== AREA PICKER TABS ========== */
+.nd-tabs {
+  display: flex;
+  gap: 3px;
+  background: var(--c-surface-hover);
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  padding: 3px;
+  margin-bottom: var(--s-3);
+}
+
+.nd-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--c-text-dim);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s var(--ease-smooth);
+  letter-spacing: 0.03em;
+}
+
+.nd-tab:hover { color: var(--c-text-main); }
+
+.nd-tab--active {
+  background: var(--c-surface);
+  color: var(--c-accent-cyan);
+  box-shadow: 0 0 8px rgba(0,240,255,0.15);
+}
+
+.nd-tab-panel--hidden { display: none; }
+
+/* ========== SELECTED TAGS ========== */
+.nd-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-height: 34px;
+  margin-bottom: var(--s-3);
+  align-items: center;
+}
+
+.nd-tags__empty {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--c-text-dim);
+  opacity: 0.6;
+}
+
+.nd-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(0,240,255,0.08);
+  border: 1px solid rgba(0,240,255,0.25);
+  color: var(--c-accent-cyan);
+  border-radius: 20px;
+  padding: 4px 8px 4px 10px;
+  font-size: 13px;
+  font-family: var(--font-sans);
+  line-height: 1;
+}
+
+.nd-tag__remove {
+  cursor: pointer;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--c-accent-cyan);
+  opacity: 0.6;
+  transition: opacity 0.15s, background 0.15s;
+  border: none;
+  background: none;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.nd-tag__remove:hover {
+  opacity: 1;
+  background: rgba(0,240,255,0.15);
+}
+
+/* ========== CITY SEARCH ========== */
+.nd-input--search {
+  margin-bottom: var(--s-2);
+}
+
+/* ========== CITY LIST ========== */
+.nd-city-list {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--c-border);
+  border-radius: 8px;
+  background: var(--c-surface-hover);
+}
+
+.nd-city-group { }
+
+.nd-city-group__label {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #1a1d24;
+  border-bottom: 1px solid var(--c-border);
+  padding: 6px 12px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--c-text-dim);
+  user-select: none;
+}
+
+.nd-city-item {
+  display: flex;
+  align-items: center;
+  padding: 9px 12px;
+  gap: 10px;
+  cursor: pointer;
+  transition: background 0.12s;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  font-size: 14px;
+  color: var(--c-text-main);
+}
+
+.nd-city-group:last-child .nd-city-item:last-child {
+  border-bottom: none;
+}
+
+.nd-city-item:hover { background: rgba(0,240,255,0.05); }
+
+.nd-city-item input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--c-border);
+  border-radius: 4px;
+  background: var(--c-surface);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.15s;
+  position: relative;
+}
+
+.nd-city-item input[type="checkbox"]:checked {
+  background: rgba(0,240,255,0.15);
+  border-color: var(--c-accent-cyan);
+}
+
+.nd-city-item input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 4px;
+  width: 5px;
+  height: 9px;
+  border: 2px solid var(--c-accent-cyan);
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+.nd-city-item__name {
+  flex: 1;
+  font-family: var(--font-sans);
+  font-weight: 300;
+  direction: rtl;
+}
+
 /* ========== FOOTER ========== */
 .nd-footer {
   text-align: center;

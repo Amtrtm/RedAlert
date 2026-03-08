@@ -180,7 +180,8 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
     </Feature>
 
     <!-- Launch app after install (via VBS to hide console window) -->
-    <CustomAction Id="LaunchApp" Directory="INSTALLFOLDER" ExeCommand="[SystemFolder]wscript.exe RedAlert.vbs" Return="asyncNoWait" />
+    <SetProperty Id="WscriptPath" Value="[SystemFolder]wscript.exe" After="CostFinalize" Sequence="execute" />
+    <CustomAction Id="LaunchApp" Property="WscriptPath" ExeCommand="&quot;[INSTALLFOLDER]RedAlert.vbs&quot;" Return="asyncNoWait" />
     <InstallExecuteSequence>
       <Custom Action="LaunchApp" After="InstallFinalize">NOT Installed OR REINSTALL</Custom>
     </InstallExecuteSequence>

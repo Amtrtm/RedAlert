@@ -26,9 +26,7 @@
           <Directory Id="PublicFolder" Name="public" />
           <Directory Id="AssetsFolder" Name="assets" />
           <Directory Id="DataFolder" Name="data" />
-          <Directory Id="NodeModulesFolder" Name="node_modules">
-            <Directory Id="Systray2Folder" Name="systray2" />
-          </Directory>
+          <Directory Id="NodeModulesFolder" Name="node_modules" />
         </Directory>
       </Directory>
       <Directory Id="ProgramMenuFolder">
@@ -83,7 +81,7 @@
       <ComponentGroupRef Id="PublicFiles" />
       <ComponentGroupRef Id="AssetFiles" />
       <ComponentGroupRef Id="DataFiles" />
-      <ComponentGroupRef Id="Systray2Files" />
+      <ComponentGroupRef Id="NodeModulesFiles" />
     </Feature>
 
     <Feature Id="AutoStart" Title="Start with Windows" Level="1">

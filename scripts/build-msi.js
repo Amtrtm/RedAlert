@@ -73,14 +73,14 @@ execFileSync(HEAT, [
   '-out', join(INSTALLER_DIR, 'data.wxs'),
 ], { stdio: 'inherit' });
 
-// Harvest node_modules/systray2/ → installs to INSTALLFOLDER\node_modules\systray2\
+// Harvest node_modules/ (systray2 + its dependencies: fs-extra, debug, etc.)
 execFileSync(HEAT, [
-  'dir', join(DIST, 'node_modules', 'systray2'),
-  '-cg', 'Systray2Files',
-  '-dr', 'Systray2Folder',
+  'dir', join(DIST, 'node_modules'),
+  '-cg', 'NodeModulesFiles',
+  '-dr', 'NodeModulesFolder',
   '-srd', '-ag', '-sfrag',
-  '-var', 'var.Systray2Dir',
-  '-out', join(INSTALLER_DIR, 'systray2.wxs'),
+  '-var', 'var.NodeModulesDir',
+  '-out', join(INSTALLER_DIR, 'node_modules.wxs'),
 ], { stdio: 'inherit' });
 
 console.log('   Directories harvested');
@@ -93,7 +93,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
     Id="*"
     Name="RedAlert"
     Language="1033"
-    Version="1.2.0"
+    Version="${version}"
     Manufacturer="RedAlert Project"
     UpgradeCode="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
 
@@ -115,9 +115,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
           <Directory Id="PublicFolder" Name="public" />
           <Directory Id="AssetsFolder" Name="assets" />
           <Directory Id="DataFolder" Name="data" />
-          <Directory Id="NodeModulesFolder" Name="node_modules">
-            <Directory Id="Systray2Folder" Name="systray2" />
-          </Directory>
+          <Directory Id="NodeModulesFolder" Name="node_modules" />
         </Directory>
       </Directory>
       <Directory Id="ProgramMenuFolder">
@@ -172,7 +170,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
       <ComponentGroupRef Id="PublicFiles" />
       <ComponentGroupRef Id="AssetFiles" />
       <ComponentGroupRef Id="DataFiles" />
-      <ComponentGroupRef Id="Systray2Files" />
+      <ComponentGroupRef Id="NodeModulesFiles" />
     </Feature>
 
     <Feature Id="AutoStart" Title="Start with Windows" Level="1">
@@ -193,7 +191,7 @@ writeFileSync(join(INSTALLER_DIR, 'RedAlert.wxs'), wxs);
 
 // Step 3: Compile with candle
 console.log('3. Compiling WiX sources...');
-const wxsFiles = ['RedAlert.wxs', 'public.wxs', 'assets.wxs', 'data.wxs', 'systray2.wxs'];
+const wxsFiles = ['RedAlert.wxs', 'public.wxs', 'assets.wxs', 'data.wxs', 'node_modules.wxs'];
 const wixobjFiles = wxsFiles.map(f => f.replace('.wxs', '.wixobj'));
 
 execFileSync(CANDLE, [
@@ -202,7 +200,7 @@ execFileSync(CANDLE, [
   '-dPublicDir=' + join(DIST, 'public'),
   '-dAssetsDir=' + join(DIST, 'assets'),
   '-dDataDir=' + join(DIST, 'data'),
-  '-dSystray2Dir=' + join(DIST, 'node_modules', 'systray2'),
+  '-dNodeModulesDir=' + join(DIST, 'node_modules'),
   '-o', join(INSTALLER_DIR, '\\'),
 ], { stdio: 'inherit' });
 console.log('   Compiled to .wixobj');
@@ -230,4 +228,4 @@ console.log('    RedAlert.exe');
 console.log('    config.json');
 console.log('    public\\       (web UI)');
 console.log('    assets\\       (icons, sounds)');
-console.log('    node_modules\\systray2\\  (tray binary)');
+console.log('    node_modules\\  (systray2 + dependencies)');

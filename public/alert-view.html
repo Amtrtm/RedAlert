@@ -180,6 +180,48 @@
     }
 
     #dismiss-btn:hover { background: #f0f0f0; }
+
+    /* Origin globe */
+    #origin-globe-container {
+      position: fixed;
+      bottom: 16px;
+      left: 16px;
+      z-index: 25;
+      width: 180px;
+      height: 180px;
+      pointer-events: none;
+      opacity: 0;
+      transform-origin: bottom left;
+      transition: opacity 0.5s ease, width 1.2s cubic-bezier(0.34, 1.56, 0.64, 1), height 1.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #origin-globe-container.visible {
+      opacity: 1;
+    }
+    #origin-globe-container.enlarged {
+      width: 360px;
+      height: 360px;
+    }
+    #origin-globe {
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.3);
+    }
+    #origin-label {
+      position: absolute;
+      bottom: -6px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 4px 16px;
+      border-radius: 4px;
+      font-family: 'Segoe UI', Tahoma, sans-serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      white-space: nowrap;
+      letter-spacing: 1px;
+    }
   </style>
 </head>
 <body>
@@ -193,6 +235,11 @@
   <button id="unmute-prompt">&#x1f50a; לחץ להפעלת שמע</button>
   <div id="status-bar">&#x2714; הכל תקין - אין התרעות</div>
   <button id="dismiss-btn">&#x2714; הבנתי - סגור</button>
+
+  <div id="origin-globe-container">
+    <canvas id="origin-globe" width="720" height="720"></canvas>
+    <div id="origin-label"></div>
+  </div>
 
   <script src="https://cdn.jsdelivr.net/npm/hls.js@1.6.15/dist/hls.min.js" integrity="sha384-iZBI1/lW9u8FcBjxuQ8nPTsU7TXhZNtzkV8H3gQHSTgz+VYQoKWqGlBHqhO84alJ" crossorigin="anonymous"></script>
   <script>
@@ -384,6 +431,370 @@
     pollAlertStatus();
     // Poll every 1 second for responsive visual updates
     setInterval(pollAlertStatus, 1000);
+
+    // ─── Origin Globe ───────────────────────────────────────────────
+    const globeCanvas = document.getElementById('origin-globe');
+    const globeCtx = globeCanvas.getContext('2d');
+    const globeContainer = document.getElementById('origin-globe-container');
+    const originLabel = document.getElementById('origin-label');
+
+    const GLOBE_SIZE = 720; // canvas pixel size (2x for retina)
+    const GLOBE_ZOOM = 2.8; // zoom factor — higher = more zoomed in on the region
+    const GLOBE_R = (GLOBE_SIZE / 2 - 12) * GLOBE_ZOOM;
+    const GLOBE_CX = GLOBE_SIZE / 2;
+    const GLOBE_CY = GLOBE_SIZE / 2;
+    const GLOBE_CLIP_R = GLOBE_SIZE / 2 - 12; // visible clipping radius
+
+    // Center the globe on the Middle East (~30°N, 40°E)
+    const CENTER_LAT = 29 * Math.PI / 180;
+    const CENTER_LON = 39 * Math.PI / 180;
+
+    // Known locations (lat/lon in degrees)
+    const ISRAEL = { lat: 31.5, lon: 34.8 };
+    const ORIGINS = {
+      'Hamas (Gaza)':         { lat: 31.4, lon: 34.4, color: '#00cc00', label: 'Gaza' },
+      'Hezbollah (Lebanon)':  { lat: 33.9, lon: 35.5, color: '#F7E210', label: 'Lebanon' },
+      'Iran':                 { lat: 32.5, lon: 51.4, color: '#ff2222', label: 'Iran' },
+      'Houthis (Yemen)':      { lat: 15.4, lon: 44.2, color: '#cccccc', label: 'Yemen' },
+      'Long Range (Yemen/Iran)': { lat: 25.0, lon: 47.0, color: '#ff2222', label: 'Long Range' }
+    };
+
+    // Country polygons with borders (lat/lon) — detailed enough for recognition
+    const COUNTRIES = [
+      { name: 'Egypt', fill: 'rgba(90,130,80,0.25)', border: 'rgba(120,180,220,0.5)', pts: [
+        [31.5,25],[31.3,27],[31.1,29],[30.8,30],[31,31.5],[31.2,32],[30.4,32.3],[29.5,32.6],[29,32.7],[28,33.2],[27.2,33.8],[26.5,33.9],[25.5,34.5],[24,35],[23.5,35.5],[22,36.9],[22,31.4],[22,25],[25,25],[28,25],[31.5,25]]
+      },
+      { name: 'Israel', fill: 'rgba(80,195,247,0.18)', border: 'rgba(80,195,247,0.7)', pts: [
+        [31.5,34.5],[31.3,34.5],[31.2,34.3],[30.9,34.3],[29.5,34.9],[29.5,35],[30.5,35],[31,35.2],[31.5,35.4],[32,35.1],[32.5,35.1],[33.1,35.6],[33.3,35.6],[33.1,35.1],[32.8,34.9],[32.5,34.9],[32.1,34.8],[31.8,34.7],[31.5,34.5]]
+      },
+      { name: 'Lebanon', fill: 'rgba(200,180,80,0.2)', border: 'rgba(200,200,120,0.6)', pts: [
+        [33.1,35.1],[33.3,35.6],[33.7,35.6],[34.0,35.9],[34.5,36.0],[34.7,36.1],[34.7,35.9],[34.1,35.6],[33.9,35.5],[33.7,35.1],[33.3,35.1],[33.1,35.1]]
+      },
+      { name: 'Syria', fill: 'rgba(100,120,80,0.22)', border: 'rgba(120,180,220,0.5)', pts: [
+        [34.7,36.1],[35.0,36.0],[35.5,35.9],[35.8,36.0],[36.2,36.2],[36.8,36.8],[37.1,38.0],[37.0,38.8],[37.0,40.0],[36.8,41.0],[36.5,42.0],[35.0,42.0],[34.5,41.0],[33.5,40.5],[33.0,39.0],[33.0,38.0],[33.5,36.5],[34.0,36.0],[34.5,36.0],[34.7,36.1]]
+      },
+      { name: 'Jordan', fill: 'rgba(130,100,80,0.22)', border: 'rgba(120,180,220,0.5)', pts: [
+        [29.5,35],[29.2,36.0],[29.0,36.1],[29.2,37.0],[30.0,37.5],[30.5,38.0],[31.0,38.5],[32.0,39.0],[33.0,39.0],[33.0,38.0],[33.5,36.5],[33.1,35.6],[33.1,35.1],[32.5,35.1],[32,35.1],[31.5,35.4],[31,35.2],[30.5,35],[29.5,35]]
+      },
+      { name: 'Iraq', fill: 'rgba(160,130,80,0.2)', border: 'rgba(120,180,220,0.5)', pts: [
+        [33.0,39.0],[32.0,39.0],[31.0,38.5],[30.5,38.0],[30.0,37.5],[29.2,37.0],[29.0,38.0],[29.5,39.0],[29.9,40.0],[29.8,42.0],[29.5,44.0],[29.5,46.0],[29.8,47.5],[30.0,48.0],[31.0,47.7],[32.0,47.5],[33.5,46.0],[34.5,45.5],[35.5,44.5],[36.5,44.0],[37.1,44.3],[37.5,43.5],[37.1,42.5],[37.1,42.0],[36.8,41.0],[36.5,42.0],[35.0,42.0],[34.5,41.0],[33.5,40.5],[33.0,39.0]]
+      },
+      { name: 'SaudiArabia', fill: 'rgba(140,120,80,0.2)', border: 'rgba(120,180,220,0.5)', pts: [
+        [29.5,35],[29.5,34.9],[28.5,34.6],[27.8,35.2],[27,36.0],[26,36.5],[25,37.3],[24,38.0],[22.8,38.8],[21.5,39.2],[20.5,39.8],[19.5,40.8],[18.5,41.5],[17.5,42.5],[16.5,43.0],[16.3,43.2],[16.5,44.5],[17.0,45.5],[17.5,46.0],[18.0,47.0],[19.0,48.0],[20.0,50.0],[21.0,51.5],[22,55.0],[23.5,56.5],[24.5,55.5],[25.0,55.0],[25.5,55.5],[26.0,56.3],[26.1,56.0],[25.3,55.5],[24.7,54.5],[24.5,54.0],[24.5,52.0],[24.3,51.5],[24.0,51.0],[24.5,49.5],[25.0,49.0],[26.0,48.5],[27.0,48.5],[28.0,48.0],[29.0,47.5],[29.5,46.0],[29.5,44.0],[29.8,42.0],[29.9,40.0],[29.5,39.0],[29.0,38.0],[29.2,37.0],[29.2,36.0],[29.5,35]]
+      },
+      { name: 'Iran', fill: 'rgba(180,80,80,0.18)', border: 'rgba(120,180,220,0.5)', pts: [
+        [30.0,48.0],[29.8,47.5],[29.5,46.0],[30.0,45.5],[30.5,45.0],[31.5,45.5],[32.0,46.0],[33.0,46.5],[34.0,46.0],[35.0,46.0],[36.0,45.5],[37.0,45.0],[37.5,44.5],[38.5,44.5],[39.0,44.5],[39.5,44.5],[39.5,45.5],[39.5,48.0],[39.0,49.5],[38.5,51.0],[38.0,52.5],[37.5,53.5],[37.0,54.5],[36.5,54.0],[36.0,53.5],[35.5,53.0],[35.0,52.5],[34.0,52.0],[33.5,52.0],[32.5,51.5],[31.5,51.0],[31.0,52.0],[30.0,52.5],[29.5,52.0],[28.5,51.5],[28.0,52.0],[27.5,52.5],[27.0,53.0],[26.5,54.0],[26.3,55.0],[26.0,56.5],[26.0,57.0],[25.5,57.5],[25.3,58.5],[25.3,59.5],[25.5,60.0],[26.0,61.5],[27.0,62.5],[28.5,61.5],[30.0,60.5],[31.5,59.5],[33.0,58.5],[34.5,56.5],[35.5,55.5],[36.5,54.5],[37.0,54.5],[37.5,53.5],[38.0,52.5],[38.5,51.0],[39.0,49.5],[39.5,48.0],[39.5,45.5],[39.0,44.5],[38.5,44.5],[37.5,44.5],[37.0,45.0],[36.0,45.5],[35.0,46.0],[34.0,46.0],[33.0,46.5],[32.0,46.0],[31.5,45.5],[30.5,45.0],[30.0,45.5],[30.0,48.0],
+        // south coast (Persian Gulf + Oman Sea)
+        [30.0,48.0],[29.0,49.5],[28.0,50.5],[27.5,51.5],[27.0,52.0],[26.5,54.0],[26.0,56.5],[25.5,57.5],[25.3,58.5],[25.3,59.5],[25.5,60.0],[26.0,61.5],[27.0,62.5]]
+      },
+      { name: 'Turkey', fill: 'rgba(100,140,100,0.22)', border: 'rgba(120,180,220,0.5)', pts: [
+        [36.2,36.2],[36.8,36.8],[37.1,38.0],[37.1,42.0],[37.1,42.5],[37.5,43.5],[38.5,44.5],[39.5,44.5],[40.0,44.0],[41.0,43.5],[42.0,44.0],[42.0,43.0],[41.5,42.5],[41.0,42.0],[40.5,41.0],[40.0,40.5],[39.5,40.0],[39.0,39.0],[38.0,37.5],[37.0,36.5],[36.5,36.0],[36.0,35.8],[36.2,36.2]],
+      },
+      { name: 'TurkeyNorth', fill: 'rgba(100,140,100,0.22)', border: 'rgba(120,180,220,0.5)', pts: [
+        [42.0,26.5],[41.0,28.0],[41.0,29.5],[41.5,30.5],[41.0,32.0],[41.5,33.5],[42.0,35.0],[41.5,36.5],[40.5,38.0],[40.0,40.5],[40.5,41.0],[41.0,42.0],[41.5,42.5],[42.0,43.0],[42.0,44.0],[41.0,43.5],[40.0,44.0],[39.5,44.5],[39.5,44.0],[39.0,43.5],[38.5,43.0],[38.0,42.0],[37.5,41.0],[37.0,40.5],[36.5,39.5],[36.0,38.0],[36.0,37.0],[36.0,35.8],[36.5,34.0],[36.8,33.5],[37.0,32.0],[36.5,30.0],[36.0,29.5],[36.5,28.0],[38.0,27.0],[38.5,26.5],[40.0,26.5],[42.0,26.5]]
+      },
+      { name: 'Yemen', fill: 'rgba(160,160,160,0.2)', border: 'rgba(120,180,220,0.5)', pts: [
+        [16.5,43.0],[16.3,43.2],[16.0,43.5],[15.5,43.5],[15.0,43.2],[14.5,43.3],[13.5,43.3],[13.0,43.5],[12.6,44.0],[12.8,45.0],[13.2,46.0],[14.0,47.0],[14.5,48.0],[15.5,50.0],[16.0,52.0],[16.5,52.2],[17.0,51.0],[17.5,50.0],[18.0,49.0],[18.5,48.0],[18.5,47.5],[18.0,47.0],[17.5,46.0],[17.0,45.5],[16.5,44.5],[16.5,43.0]]
+      },
+      { name: 'Oman', fill: 'rgba(130,130,100,0.18)', border: 'rgba(120,180,220,0.5)', pts: [
+        [16.5,52.2],[16.0,52.0],[17.0,55.0],[20.0,57.5],[21.5,59.5],[23.0,59.0],[24.5,57.0],[24.5,56.5],[23.5,56.5],[22,55.0],[21.0,55.5],[20.0,55.8],[20.0,56.5],[22.0,59.5],[22.5,59.5],[23.0,59.0],[24.5,57.0],[25.0,56.5],[26.0,56.3],[25.5,55.5],[25.0,55.0],[24.5,55.5],[23.5,56.5]]
+      },
+      { name: 'UAE', fill: 'rgba(130,130,100,0.18)', border: 'rgba(120,180,220,0.5)', pts: [
+        [24.5,54.0],[24.5,52.0],[24.3,51.5],[24.0,51.0],[23.5,51.5],[23.0,52.0],[23.0,53.5],[24.0,54.5],[24.5,55.5],[25.0,55.0],[24.7,54.5],[24.5,54.0]]
+      },
+      { name: 'Kuwait', fill: 'rgba(130,130,80,0.2)', border: 'rgba(120,180,220,0.5)', pts: [
+        [30.0,48.0],[30.0,47.5],[29.5,47.5],[29.0,47.5],[28.5,48.0],[29.0,48.5],[29.5,48.2],[30.0,48.0]]
+      },
+      { name: 'Qatar', fill: 'rgba(130,130,80,0.2)', border: 'rgba(120,180,220,0.5)', pts: [
+        [26.0,51.0],[25.5,50.8],[25.0,51.0],[24.5,51.3],[24.5,51.5],[25.0,51.6],[25.5,51.5],[26.0,51.3],[26.2,51.0],[26.0,51.0]]
+      },
+      { name: 'Somalia', fill: 'rgba(90,100,80,0.18)', border: 'rgba(120,180,220,0.5)', pts: [
+        [12,44],[11,44],[10,45],[9,46],[7,47],[5,47],[4,46],[2,45],[1,44],[1,46],[2,48],[3,49],[5,49],[7,49.5],[9,50],[10,51],[11,51],[12,50.5],[12,48],[12,46],[12,44]]
+      },
+      { name: 'Eritrea', fill: 'rgba(90,130,80,0.2)', border: 'rgba(120,180,220,0.5)', pts: [
+        [18,38.5],[17.5,39.0],[17,39.5],[16,40],[15.5,40.5],[15,41.5],[14.5,42],[13.5,42.5],[13,43.5],[14.5,43.3],[15,43.2],[15.5,43.5],[16,43.5],[16.5,43.0],[17.5,42.5],[18,41.5],[18,40.5],[18.5,39.5],[18,38.5]]
+      },
+      { name: 'Sudan', fill: 'rgba(130,120,80,0.18)', border: 'rgba(120,180,220,0.5)', pts: [
+        [22,36.9],[22,31.4],[22,25],[20,25],[18,25],[16,25],[14,25],[12,25],[10,25],[10,27],[10,29],[10.5,30],[11,31.5],[12,32],[12.5,33],[13,33.5],[13.5,34],[14,35],[15,36],[15.5,37],[16,37.5],[17,37],[17.5,37.5],[18,38.5],[18.5,39.5],[18,40.5],[18,41.5],[17.5,42.5],[18.5,41.5],[19.5,40.8],[20.5,39.8],[21.5,39.2],[22,38.5],[22,36.9]]
+      },
+      { name: 'Cyprus', fill: 'rgba(100,140,100,0.25)', border: 'rgba(120,180,220,0.6)', pts: [
+        [35.7,33.9],[35.5,34.0],[35.2,33.4],[35.0,33.0],[34.7,32.4],[34.6,32.9],[34.7,33.5],[35.0,34.0],[35.2,34.5],[35.4,34.6],[35.6,34.5],[35.7,34.0],[35.7,33.9]]
+      },
+      { name: 'Crete', fill: 'rgba(100,130,100,0.22)', border: 'rgba(120,180,220,0.5)', pts: [
+        [35.2,24.0],[35.4,24.5],[35.5,25.0],[35.3,25.5],[35.2,26.0],[35.0,26.3],[35.2,26.3],[35.5,25.5],[35.5,25.0],[35.4,24.5],[35.2,24.0]]
+      },
+      { name: 'Libya', fill: 'rgba(120,110,80,0.15)', border: 'rgba(120,180,220,0.4)', pts: [
+        [33,12],[32.5,15],[32,18],[31.5,20],[31.0,23],[31.0,25],[30,25],[25,25],[22,25],[20,25],[20,15],[20,12],[23,12],[25,10],[27,10],[30,10],[32,11],[33,12]]
+      },
+      { name: 'Greece', fill: 'rgba(100,140,120,0.22)', border: 'rgba(120,180,220,0.5)', pts: [
+        [41.5,26.0],[41.0,26.5],[40.5,24.0],[40.0,23.5],[39.5,22.5],[39.0,21.5],[38.5,21.0],[38.0,21.5],[37.5,22.0],[37.0,22.5],[36.5,23.0],[36.5,22.5],[37.0,21.5],[37.5,21.0],[38.0,21.0],[38.5,20.5],[39.0,20.0],[39.5,20.5],[40.0,21.0],[40.5,21.5],[41.0,22.0],[41.5,23.0],[41.5,24.5],[41.5,26.0]]
+      },
+    ];
+
+    let globeAnimFrame = 0;
+    let currentOriginKey = null;
+    let arcProgress = 0;
+
+    function latLonToGlobe(latDeg, lonDeg) {
+      const lat = latDeg * Math.PI / 180;
+      const lon = lonDeg * Math.PI / 180;
+      // Orthographic projection centered on CENTER_LAT/CENTER_LON
+      const x = Math.cos(lat) * Math.sin(lon - CENTER_LON);
+      const y = Math.cos(CENTER_LAT) * Math.sin(lat) - Math.sin(CENTER_LAT) * Math.cos(lat) * Math.cos(lon - CENTER_LON);
+      const z = Math.sin(CENTER_LAT) * Math.sin(lat) + Math.cos(CENTER_LAT) * Math.cos(lat) * Math.cos(lon - CENTER_LON);
+      if (z < 0) return null; // behind the globe
+      return {
+        x: GLOBE_CX + x * GLOBE_R,
+        y: GLOBE_CY - y * GLOBE_R
+      };
+    }
+
+    function drawGlobe(originKey) {
+      const ctx = globeCtx;
+      ctx.clearRect(0, 0, GLOBE_SIZE, GLOBE_SIZE);
+
+      // Globe background sphere
+      const grad = ctx.createRadialGradient(
+        GLOBE_CX - GLOBE_CLIP_R * 0.3, GLOBE_CY - GLOBE_CLIP_R * 0.3, GLOBE_CLIP_R * 0.1,
+        GLOBE_CX, GLOBE_CY, GLOBE_CLIP_R
+      );
+      grad.addColorStop(0, '#1a3a5c');
+      grad.addColorStop(0.7, '#0d1f33');
+      grad.addColorStop(1, '#050e18');
+      ctx.beginPath();
+      ctx.arc(GLOBE_CX, GLOBE_CY, GLOBE_CLIP_R, 0, 2 * Math.PI);
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Clip to globe circle for zoomed projection
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(GLOBE_CX, GLOBE_CY, GLOBE_CLIP_R, 0, 2 * Math.PI);
+      ctx.clip();
+
+      // Grid lines (latitude/longitude)
+      ctx.strokeStyle = 'rgba(100,150,200,0.12)';
+      ctx.lineWidth = 1;
+      for (let lat = -80; lat <= 80; lat += 20) {
+        ctx.beginPath();
+        let started = false;
+        for (let lon = -180; lon <= 180; lon += 3) {
+          const p = latLonToGlobe(lat, lon);
+          if (p) {
+            if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+            else ctx.lineTo(p.x, p.y);
+          } else { started = false; }
+        }
+        ctx.stroke();
+      }
+      for (let lon = -180; lon <= 180; lon += 20) {
+        ctx.beginPath();
+        let started = false;
+        for (let lat = -90; lat <= 90; lat += 3) {
+          const p = latLonToGlobe(lat, lon);
+          if (p) {
+            if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+            else ctx.lineTo(p.x, p.y);
+          } else { started = false; }
+        }
+        ctx.stroke();
+      }
+
+      // Interpolate a polygon's edges along the sphere surface for curved appearance
+      function interpolateCountry(rawPts, stepDeg) {
+        const interp = [];
+        for (let i = 0; i < rawPts.length; i++) {
+          const [lat1, lon1] = rawPts[i];
+          const [lat2, lon2] = rawPts[(i + 1) % rawPts.length];
+          const dLat = lat2 - lat1;
+          const dLon = lon2 - lon1;
+          const dist = Math.sqrt(dLat * dLat + dLon * dLon);
+          const steps = Math.max(1, Math.ceil(dist / stepDeg));
+          for (let s = 0; s < steps; s++) {
+            const t = s / steps;
+            interp.push(latLonToGlobe(lat1 + dLat * t, lon1 + dLon * t));
+          }
+        }
+        return interp.filter(Boolean);
+      }
+
+      // Draw countries (filled + bordered) with curved edges
+      for (const country of COUNTRIES) {
+        const pts = interpolateCountry(country.pts, 0.3);
+        if (pts.length < 3) continue;
+
+        // Fill
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.closePath();
+        ctx.fillStyle = country.fill;
+        ctx.fill();
+
+        // Border
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+        ctx.closePath();
+        ctx.strokeStyle = country.border;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Israel marker (green dot)
+      const israelP = latLonToGlobe(ISRAEL.lat, ISRAEL.lon);
+      if (israelP) {
+        ctx.beginPath();
+        ctx.arc(israelP.x, israelP.y, 10, 0, 2 * Math.PI);
+        ctx.fillStyle = '#4fc3f7';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+      }
+
+      // Draw origin marker and arc if active
+      if (originKey && ORIGINS[originKey] && israelP) {
+        const orig = ORIGINS[originKey];
+        const origP = latLonToGlobe(orig.lat, orig.lon);
+        if (origP) {
+          // Origin marker (pulsing dot)
+          const pulse = 1 + 0.3 * Math.sin(globeAnimFrame * 0.08);
+          ctx.beginPath();
+          ctx.arc(origP.x, origP.y, 12 * pulse, 0, 2 * Math.PI);
+          ctx.fillStyle = orig.color;
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2.5;
+          ctx.stroke();
+
+          // Animated arc from origin to Israel
+          drawMissileArc(ctx, orig, ISRAEL, orig.color, arcProgress);
+        }
+      }
+
+      // Restore clipping before edge highlight
+      ctx.restore();
+
+      // Globe edge highlight
+      ctx.beginPath();
+      ctx.arc(GLOBE_CX, GLOBE_CY, GLOBE_CLIP_R, 0, 2 * Math.PI);
+      ctx.strokeStyle = 'rgba(100,180,255,0.25)';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+    }
+
+    function drawMissileArc(ctx, from, to, color, progress) {
+      // Draw a great-circle-like arc with animated "missile" head
+      const steps = 40;
+      const drawSteps = Math.floor(steps * Math.min(progress, 1));
+      const points = [];
+      for (let i = 0; i <= steps; i++) {
+        const t = i / steps;
+        const lat = from.lat + (to.lat - from.lat) * t;
+        const lon = from.lon + (to.lon - from.lon) * t;
+        // Lift the arc upward (globe surface) with a sine curve
+        const lift = Math.sin(t * Math.PI) * 8;
+        const p = latLonToGlobe(lat + lift, lon);
+        if (p) points.push({ ...p, t });
+      }
+
+      if (points.length < 2) return;
+
+      // Arc trail (full path, faded)
+      ctx.beginPath();
+      ctx.moveTo(points[0].x, points[0].y);
+      for (let i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+      ctx.strokeStyle = color + '33';
+      ctx.lineWidth = 3;
+      ctx.setLineDash([6, 6]);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Animated arc (drawn portion)
+      if (drawSteps > 1) {
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i <= Math.min(drawSteps, points.length - 1); i++) {
+          ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 12;
+        ctx.stroke();
+        ctx.shadowBlur = 0;
+
+        // Missile head glow
+        const head = points[Math.min(drawSteps, points.length - 1)];
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, 7, 0, 2 * Math.PI);
+        ctx.fillStyle = '#fff';
+        ctx.shadowColor = color;
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    let globeInterval = null;
+    let globeShrinkTimer = null;
+
+    function startGlobeAnimation(originKey) {
+      if (globeInterval) cancelAnimationFrame(globeInterval);
+      if (globeShrinkTimer) { clearTimeout(globeShrinkTimer); globeShrinkTimer = null; }
+      currentOriginKey = originKey;
+      arcProgress = 0;
+      globeAnimFrame = 0;
+
+      // Grow to full size immediately
+      globeContainer.classList.add('enlarged');
+
+      // Shrink back after 10 seconds
+      globeShrinkTimer = setTimeout(() => {
+        globeContainer.classList.remove('enlarged');
+        globeShrinkTimer = null;
+      }, 10000);
+
+      function animate() {
+        globeAnimFrame++;
+        if (arcProgress < 1.15) arcProgress += 0.012;
+        else arcProgress = 0; // loop the animation
+        drawGlobe(currentOriginKey);
+        globeInterval = requestAnimationFrame(animate);
+      }
+      animate();
+    }
+
+    function stopGlobeAnimation() {
+      if (globeInterval) {
+        cancelAnimationFrame(globeInterval);
+        globeInterval = null;
+      }
+      if (globeShrinkTimer) { clearTimeout(globeShrinkTimer); globeShrinkTimer = null; }
+      currentOriginKey = null;
+      globeContainer.classList.remove('visible', 'enlarged');
+    }
+
+    // Hook into the existing updateDisplay to show/hide globe
+    const originalUpdateDisplay = updateDisplay;
+    updateDisplay = function(status) {
+      originalUpdateDisplay(status);
+
+      if (status.active && status.origin && ORIGINS[status.origin]) {
+        globeContainer.classList.add('visible');
+        const orig = ORIGINS[status.origin];
+        originLabel.textContent = orig.label;
+        originLabel.style.borderBottom = '2px solid ' + orig.color;
+        if (currentOriginKey !== status.origin) {
+          startGlobeAnimation(status.origin);
+        }
+      } else if (!status.active) {
+        stopGlobeAnimation();
+      }
+    };
   </script>
 </body>
 </html>

@@ -22,6 +22,7 @@ import AlertPoller from './alertPoller.js';
 import { handleAlert, clearAlert, setOnClearCallback } from './alertHandler.js';
 import { startConfigServer } from './configServer.js';
 import { createTray, setAlertMode, killTray } from './tray.js';
+import { loadTimeframes } from './originClassifier.js';
 
 // Register App ID for Windows toast notifications (Windows only)
 if (isWindows) {
@@ -44,6 +45,9 @@ log.info('Loading config...');
 loadConfig();
 const config = getConfig();
 log.info('Config loaded:', JSON.stringify({ areas: config.areas, port: config.configPort, pollInterval: config.pollInterval }));
+
+log.info('Loading origin classifier timeframes...');
+loadTimeframes();
 
 const poller = new AlertPoller();
 

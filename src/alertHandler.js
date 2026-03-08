@@ -6,6 +6,7 @@ import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { log } from './logger.js';
 import { isWindows, isMac, getChromePath, getTrayIconExtension } from './platform.js';
+import { classifyOrigin, getOriginCoordinates, getOriginColor, AlertOrigin } from './originClassifier.js';
 
 // Resolve the real app directory (not the pkg snapshot)
 const appDir = process.pkg ? dirname(process.execPath) : join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -25,7 +26,10 @@ let currentAlertState = {
   title: '',
   description: '',
   timestamp: null,
-  safetyCountdown: null
+  safetyCountdown: null,
+  origin: null,
+  originCoords: null,
+  originColor: null
 };
 
 let browserOpen = false;
@@ -104,6 +108,10 @@ export function handleAlert(alert) {
   // Start the safety timer (10 min from now)
   startSafetyTimer();
 
+  // Classify the origin of this alert
+  const origin = classifyOrigin(alert);
+  log.info(`Alert origin classified as: ${origin}`);
+
   // Update current alert state for the alert-view page
   currentAlertState = {
     active: true,
@@ -111,7 +119,10 @@ export function handleAlert(alert) {
     title: alert.title || 'התרעה',
     description: alert.desc || '',
     timestamp: new Date().toISOString(),
-    safetyCountdown: lastRegionalAlertTime + SAFETY_DURATION_MS
+    safetyCountdown: lastRegionalAlertTime + SAFETY_DURATION_MS,
+    origin: origin,
+    originCoords: getOriginCoordinates(origin),
+    originColor: getOriginColor(origin)
   };
 
   const actions = config.alertActions;
@@ -272,7 +283,10 @@ function clearAlertSafe(isOfficial) {
       title: 'האירוע הסתיים',
       description: reason,
       timestamp: new Date().toISOString(),
-      safetyCountdown: null
+      safetyCountdown: null,
+      origin: null,
+      originCoords: null,
+      originColor: null
     };
     lastRegionalAlertTime = null;
     if (onClearCallback) onClearCallback();

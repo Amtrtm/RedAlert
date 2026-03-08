@@ -101,6 +101,7 @@ for (const platform of platforms) {
   console.log(`3. Copying static assets for ${platform}...`);
   cpSync(join(ROOT, 'public'), join(platformDir, 'public'), { recursive: true });
   cpSync(join(ROOT, 'assets'), join(platformDir, 'assets'), { recursive: true });
+  cpSync(join(ROOT, 'data'), join(platformDir, 'data'), { recursive: true });
   cpSync(join(ROOT, 'config.json'), join(platformDir, 'config.json'));
 
   // Copy bundle to platform dir if multi-platform build

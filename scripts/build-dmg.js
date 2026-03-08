@@ -84,6 +84,7 @@ chmodSync(join(MACOS, 'RedAlert'), 0o755);
 console.log('4. Copying resources...');
 cpSync(join(macDist, 'public'), join(RESOURCES, 'public'), { recursive: true });
 cpSync(join(macDist, 'assets'), join(RESOURCES, 'assets'), { recursive: true });
+cpSync(join(macDist, 'data'), join(RESOURCES, 'data'), { recursive: true });
 cpSync(join(macDist, 'config.json'), join(RESOURCES, 'config.json'));
 
 if (existsSync(join(macDist, 'node_modules'))) {

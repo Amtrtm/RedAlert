@@ -62,6 +62,16 @@ execFileSync(HEAT, [
   '-out', join(INSTALLER_DIR, 'assets.wxs'),
 ], { stdio: 'inherit' });
 
+// Harvest data/ → installs to INSTALLFOLDER\data\
+execFileSync(HEAT, [
+  'dir', join(DIST, 'data'),
+  '-cg', 'DataFiles',
+  '-dr', 'DataFolder',
+  '-srd', '-ag', '-sfrag',
+  '-var', 'var.DataDir',
+  '-out', join(INSTALLER_DIR, 'data.wxs'),
+], { stdio: 'inherit' });
+
 // Harvest node_modules/systray2/ → installs to INSTALLFOLDER\node_modules\systray2\
 execFileSync(HEAT, [
   'dir', join(DIST, 'node_modules', 'systray2'),
@@ -103,6 +113,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
         <Directory Id="INSTALLFOLDER" Name="RedAlert">
           <Directory Id="PublicFolder" Name="public" />
           <Directory Id="AssetsFolder" Name="assets" />
+          <Directory Id="DataFolder" Name="data" />
           <Directory Id="NodeModulesFolder" Name="node_modules">
             <Directory Id="Systray2Folder" Name="systray2" />
           </Directory>
@@ -153,6 +164,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
       <ComponentRef Id="StartMenuShortcut" />
       <ComponentGroupRef Id="PublicFiles" />
       <ComponentGroupRef Id="AssetFiles" />
+      <ComponentGroupRef Id="DataFiles" />
       <ComponentGroupRef Id="Systray2Files" />
     </Feature>
 
@@ -173,7 +185,7 @@ writeFileSync(join(INSTALLER_DIR, 'RedAlert.wxs'), wxs);
 
 // Step 3: Compile with candle
 console.log('3. Compiling WiX sources...');
-const wxsFiles = ['RedAlert.wxs', 'public.wxs', 'assets.wxs', 'systray2.wxs'];
+const wxsFiles = ['RedAlert.wxs', 'public.wxs', 'assets.wxs', 'data.wxs', 'systray2.wxs'];
 const wixobjFiles = wxsFiles.map(f => f.replace('.wxs', '.wixobj'));
 
 execFileSync(CANDLE, [
@@ -181,6 +193,7 @@ execFileSync(CANDLE, [
   '-dDistDir=' + DIST,
   '-dPublicDir=' + join(DIST, 'public'),
   '-dAssetsDir=' + join(DIST, 'assets'),
+  '-dDataDir=' + join(DIST, 'data'),
   '-dSystray2Dir=' + join(DIST, 'node_modules', 'systray2'),
   '-o', join(INSTALLER_DIR, '\\'),
 ], { stdio: 'inherit' });

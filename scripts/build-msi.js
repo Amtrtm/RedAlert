@@ -92,7 +92,7 @@ const wxs = `<?xml version="1.0" encoding="UTF-8"?>
     Id="*"
     Name="RedAlert"
     Language="1033"
-    Version="1.2.0"
+    Version="1.1.6"
     Manufacturer="RedAlert Project"
     UpgradeCode="a1b2c3d4-e5f6-7890-abcd-ef1234567890">
 

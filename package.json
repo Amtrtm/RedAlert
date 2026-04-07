@@ -1,12 +1,13 @@
 {
   "name": "redalert",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "",
   "main": "index.js",
   "directories": {
     "doc": "docs"
   },
   "scripts": {
+    "postinstall": "node -e \"if(process.platform!=='win32'){try{require('fs').chmodSync('node_modules/systray2/traybin/tray_linux_release',0o755)}catch(e){}}\"",
     "start": "node src/main.js",
     "build": "node scripts/build.js",
     "build:win": "node scripts/build.js --win",
@@ -31,7 +32,6 @@
     "express-rate-limit": "^8.3.0",
     "node-notifier": "^10.0.1",
     "open": "^11.0.0",
-    "play-sound": "^1.1.6",
     "systray2": "^2.1.4"
   },
   "devDependencies": {
@@ -40,7 +40,6 @@
     "axios": "^1.13.6",
     "esbuild": "^0.27.3",
     "pkg": "^5.8.1",
-    "sharp": "^0.34.5",
-    "wix-msi": "^0.6.1"
+    "sharp": "^0.34.5"
   }
 }

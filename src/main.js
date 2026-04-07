@@ -16,7 +16,8 @@ log.info('__dirname (snapshot):', typeof __dirname !== 'undefined' ? __dirname :
 log.info('Platform:', process.platform);
 
 import { execFileSync, execFile } from 'child_process';
-import { isWindows, getChromePath } from './platform.js';
+import { isWindows, isLinux, getChromePath } from './platform.js';
+import { installLinuxLauncher } from './autoStart.js';
 import { loadConfig, getConfig } from './configManager.js';
 import AlertPoller from './alertPoller.js';
 import { handleAlert, clearAlert, setOnClearCallback } from './alertHandler.js';
@@ -38,6 +39,15 @@ if (isWindows) {
     log.info('App ID registered for notifications');
   } catch (e) {
     log.warn('App ID registration failed (non-critical):', e.message);
+  }
+}
+
+// Linux: ensure RedAlert appears in the apps launcher (idempotent)
+if (isLinux) {
+  try {
+    installLinuxLauncher();
+  } catch (e) {
+    log.warn('Launcher install failed (non-critical):', e.message);
   }
 }
 

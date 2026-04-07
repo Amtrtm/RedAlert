@@ -1,7 +1,8 @@
-import { writeFileSync, unlinkSync, existsSync, mkdirSync } from 'fs';
+import { writeFileSync, unlinkSync, existsSync, mkdirSync, readFileSync } from 'fs';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { isMac, isWindows, getLaunchAgentDir } from './platform.js';
+import { homedir } from 'os';
+import { isMac, isWindows, isLinux, getLaunchAgentDir } from './platform.js';
 import { log } from './logger.js';
 
 const PLIST_NAME = 'com.redalert.monitor.plist';
@@ -19,6 +20,8 @@ export function setAutoStart(enabled) {
     setAutoStartMac(enabled);
   } else if (isWindows) {
     setAutoStartWindows(enabled);
+  } else if (isLinux) {
+    setAutoStartLinux(enabled);
   }
 }
 
@@ -66,7 +69,78 @@ function setAutoStartMac(enabled) {
 }
 
 function setAutoStartWindows(enabled) {
-  // Windows auto-start is managed via the MSI installer's Startup folder shortcut.
-  // For development/non-MSI installs, we could add a registry Run key here.
   log.info(`Windows auto-start ${enabled ? 'enabled' : 'disabled'} (managed by installer)`);
+}
+
+/**
+ * Installs a desktop launcher entry on Linux so RedAlert appears in the
+ * applications menu / launcher. Idempotent — safe to call on every startup.
+ */
+export function installLinuxLauncher() {
+  if (!isLinux) return;
+
+  const appsDir = join(process.env.XDG_DATA_HOME || join(homedir(), '.local', 'share'), 'applications');
+  const desktopPath = join(appsDir, 'redalert.desktop');
+
+  const execPath = process.pkg
+    ? process.execPath
+    : `${process.execPath} ${join(appDir, 'src', 'main.js')}`;
+  const iconPath = join(appDir, 'assets', 'icon.png');
+
+  const desktopEntry = `[Desktop Entry]
+Type=Application
+Name=RedAlert
+Comment=Pikud HaOref alert monitor
+Exec=${execPath}
+Icon=${iconPath}
+Terminal=false
+Categories=Utility;Network;
+StartupNotify=false
+`;
+
+  try {
+    mkdirSync(appsDir, { recursive: true });
+    // Only rewrite if missing or contents changed, to avoid unnecessary disk churn
+    let needsWrite = true;
+    if (existsSync(desktopPath)) {
+      try {
+        const current = readFileSync(desktopPath, 'utf8');
+        if (current === desktopEntry) needsWrite = false;
+      } catch {}
+    }
+    if (needsWrite) {
+      writeFileSync(desktopPath, desktopEntry);
+      log.info('Launcher entry installed:', desktopPath);
+    }
+  } catch (e) {
+    log.warn('Failed to install Linux launcher entry:', e.message);
+  }
+}
+
+function setAutoStartLinux(enabled) {
+  const autostartDir = join(process.env.XDG_CONFIG_HOME || join(homedir(), '.config'), 'autostart');
+  const desktopPath = join(autostartDir, 'redalert.desktop');
+
+  if (enabled) {
+    mkdirSync(autostartDir, { recursive: true });
+
+    const execPath = process.pkg ? process.execPath : `${process.execPath} ${join(appDir, 'src', 'main.js')}`;
+
+    const desktopEntry = `[Desktop Entry]
+Type=Application
+Name=RedAlert
+Comment=Pikud HaOref alert monitor
+Exec=${execPath}
+Terminal=false
+X-GNOME-Autostart-enabled=true
+`;
+
+    writeFileSync(desktopPath, desktopEntry);
+    log.info('Autostart desktop entry installed:', desktopPath);
+  } else {
+    if (existsSync(desktopPath)) {
+      unlinkSync(desktopPath);
+      log.info('Autostart desktop entry removed:', desktopPath);
+    }
+  }
 }

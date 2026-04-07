@@ -102,7 +102,10 @@ function createAlertWav() {
   return buf;
 }
 
-writeFileSync(join(assetsDir, 'icon.ico'), createIco({ r: 46, g: 204, b: 113 }));
+// icon.ico is the real branded app icon committed to the repo — don't clobber it.
+if (!existsSync(join(assetsDir, 'icon.ico'))) {
+  writeFileSync(join(assetsDir, 'icon.ico'), createIco({ r: 46, g: 204, b: 113 }));
+}
 writeFileSync(join(assetsDir, 'icon-alert.ico'), createIco({ r: 231, g: 76, b: 60 }));
 writeFileSync(join(assetsDir, 'alert.wav'), createAlertWav());
 
@@ -171,7 +174,10 @@ function createPng(color, size = 22) {
   ]);
 }
 
-writeFileSync(join(assetsDir, 'icon.png'), createPng({ r: 46, g: 204, b: 113 }));
+// icon.png is the real branded app icon committed to the repo — don't clobber it.
+if (!existsSync(join(assetsDir, 'icon.png'))) {
+  writeFileSync(join(assetsDir, 'icon.png'), createPng({ r: 46, g: 204, b: 113 }));
+}
 writeFileSync(join(assetsDir, 'icon-alert.png'), createPng({ r: 231, g: 76, b: 60 }));
 
 console.log('Assets generated in', assetsDir);

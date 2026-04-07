@@ -31,8 +31,25 @@
   <!-- Monitored Areas -->
   <div class="nd-card">
     <div class="nd-card__title">Monitored Areas</div>
-    <div class="nd-card__help">Enter area names in Hebrew as they appear in the Pikud HaOref system. One per line.</div>
-    <textarea class="nd-textarea" id="areas" rows="4" placeholder="&#1514;&#1500; &#1488;&#1489;&#1497;&#1489; - &#1502;&#1512;&#1499;&#1494; &#1492;&#1506;&#1497;&#1512;&#10;&#1495;&#1493;&#1500;&#1493;&#1503;"></textarea>
+
+    <!-- Tab switcher -->
+    <div class="nd-tabs" role="tablist">
+      <button class="nd-tab nd-tab--active" id="tab-btn-picker" role="tab" data-tab="picker">בחר מרשימה</button>
+      <button class="nd-tab" id="tab-btn-freetext" role="tab" data-tab="freetext">טקסט חופשי</button>
+    </div>
+
+    <!-- City Picker Tab -->
+    <div id="tab-panel-picker" class="nd-tab-panel" role="tabpanel">
+      <div id="selected-tags" class="nd-tags"></div>
+      <input type="text" id="city-search" class="nd-input nd-input--search" placeholder="חיפוש עיר או אזור..." autocomplete="off" dir="rtl">
+      <div id="city-list" class="nd-city-list"></div>
+    </div>
+
+    <!-- Free Text Tab -->
+    <div id="tab-panel-freetext" class="nd-tab-panel nd-tab-panel--hidden" role="tabpanel">
+      <div class="nd-card__help">הכנס שמות אזורים בעברית כפי שמופיעים בפיקוד העורף. שורה אחת לכל אזור.</div>
+      <textarea class="nd-textarea" id="areas-freetext" rows="6" placeholder="תל אביב - יפו&#10;חולון&#10;בת ים"></textarea>
+    </div>
   </div>
 
   <!-- Poll Interval -->
@@ -139,6 +156,7 @@
 
 </div>
 
+<script src="cities.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
